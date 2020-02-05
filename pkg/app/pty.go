@@ -3,16 +3,16 @@ package app
 import (
 	"io"
 	"os"
-	"os/exec"
 
 	"github.com/jesseduffield/gocui"
 	"github.com/jesseduffield/pty"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func (app *App) runCommandInPty(cmd *exec.Cmd, view *gocui.View) error {
-	width, height := view.Size()
-	ptmx, err := pty.StartWithSize(cmd, &pty.Winsize{Cols: uint16(width), Rows: uint16(height)})
+func (app *App) runCommandInPty(view *gocui.View) error {
+	// width, height := view.Size()
+	// app.Log.Warn(width, height)
+	ptmx, err := pty.StartWithSize(app.cmd, &pty.Winsize{Cols: 200, Rows: 200})
 	if err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (app *App) runCommandInPty(cmd *exec.Cmd, view *gocui.View) error {
 	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
 	go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
-	_, _ = io.Copy(view, ptmx)
+	_, _ = io.Copy(os.Stdout, ptmx)
 
 	return nil
 }

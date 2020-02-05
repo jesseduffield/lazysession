@@ -1,10 +1,10 @@
 package app
 
 import (
-	logNative "log"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	logNative "log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -92,8 +92,6 @@ func (app *App) Run() error {
 	cmd, err := createCmd()
 	if err != nil {
 		logNative.Fatalln(err)
-		// this is bad, I know
-		return err
 	}
 
 	app.cmd = cmd
@@ -105,6 +103,7 @@ func (app *App) Run() error {
 	defer g.Close()
 
 	app.g = g
+	app.g.Cursor = true
 	app.g.SetManagerFunc(app.layout)
 	app.setKeybindings()
 

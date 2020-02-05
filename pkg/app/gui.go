@@ -1,24 +1,15 @@
 package app
 
 import (
-	"fmt"
 	"log"
+	"time"
 
 	"github.com/jesseduffield/gocui"
 )
 
-func (app *App) refreshMain() error {
-	app.update(func() error {
-		app.views.main.Clear()
-		fmt.Fprint(app.views.main, "test\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\n")
-		return nil
-	})
-	return nil
-}
-
 func (app *App) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", -1, -1, maxX, maxY, 0); err != nil {
+	if v, err := g.SetView("main", 0, 0, maxX, maxY, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -26,11 +17,31 @@ func (app *App) layout(g *gocui.Gui) error {
 		v.Highlight = true
 		app.views.main = v
 
-		app.refreshMain()
 		app.g.SetCurrentView("main")
+		go app.onFirstRender()
 	}
 
 	return nil
+}
+
+func (app *App) onFirstRender() {
+	go func() {
+		if err := app.runCommandInPty(app.views.main); err != nil {
+			panic(err)
+		}
+
+		app.update(func() error {
+			return gocui.ErrQuit
+		})
+	}()
+
+	// TODO, get gocui to receive a callback on taint so that we don't need to poll
+	ticker := time.NewTicker(time.Millisecond * 100)
+	for range ticker.C {
+		app.g.Update(func(*gocui.Gui) error {
+			return nil
+		})
+	}
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
