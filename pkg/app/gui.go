@@ -10,7 +10,7 @@ import (
 func (app *App) refreshMain() error {
 	app.update(func() error {
 		app.views.main.Clear()
-		fmt.Fprint(app.views.main, "test")
+		fmt.Fprint(app.views.main, "test\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\ntest\n")
 		return nil
 	})
 	return nil
@@ -18,7 +18,7 @@ func (app *App) refreshMain() error {
 
 func (app *App) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", -1, maxY-1, maxX, maxY, 0); err != nil {
+	if v, err := g.SetView("main", -1, -1, maxX, maxY, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -27,6 +27,7 @@ func (app *App) layout(g *gocui.Gui) error {
 		app.views.main = v
 
 		app.refreshMain()
+		app.g.SetCurrentView("main")
 	}
 
 	return nil

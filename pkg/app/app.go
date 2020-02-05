@@ -1,9 +1,12 @@
 package app
 
 import (
+	logNative "log"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/fatih/color"
@@ -25,6 +28,7 @@ type App struct {
 	config *config.AppConfig
 	Log    *logrus.Entry
 	Tr     i18n.TranslationSet
+	cmd    *exec.Cmd
 }
 
 // State holds the app's state
@@ -56,6 +60,18 @@ func NewApp(config *config.AppConfig) (*App, error) {
 	return app, nil
 }
 
+func createCmd() (*exec.Cmd, error) {
+	if len(os.Args) == 1 {
+		return nil, errors.New("must supply command as an argument")
+	}
+
+	if len(os.Args) == 2 {
+		return exec.Command(os.Args[1]), nil
+	}
+
+	return exec.Command(os.Args[1], os.Args[2:]...), nil
+}
+
 // Run runs the app
 func (app *App) Run() error {
 	if _, err := os.Stat(filepath.Join(app.config.ConfigDir, stateFilename)); os.IsNotExist(err) {
@@ -73,6 +89,15 @@ func (app *App) Run() error {
 		return err
 	}
 
+	cmd, err := createCmd()
+	if err != nil {
+		logNative.Fatalln(err)
+		// this is bad, I know
+		return err
+	}
+
+	app.cmd = cmd
+
 	g, err := gocui.NewGui(gocui.OutputNormal, false, app.Log)
 	if err != nil {
 		return err
@@ -80,7 +105,6 @@ func (app *App) Run() error {
 	defer g.Close()
 
 	app.g = g
-
 	app.g.SetManagerFunc(app.layout)
 	app.setKeybindings()
 

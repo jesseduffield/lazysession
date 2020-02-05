@@ -8,6 +8,7 @@ require (
 	github.com/go-errors/errors v1.0.1
 	github.com/imdario/mergo v0.3.8
 	github.com/jesseduffield/gocui v0.3.1-0.20200205100510-599b1458db46
+	github.com/jesseduffield/pty v1.2.1
 	github.com/jesseduffield/termbox-go v0.0.0-20200130214842-1d31d1faa3c9 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mattn/go-runewidth v0.0.8 // indirect
@@ -16,6 +17,7 @@ require (
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )

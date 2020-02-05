@@ -52,8 +52,6 @@ func main() {
 	if err != nil {
 		newErr := errors.Wrap(err, 0)
 		stackTrace := newErr.ErrorStack()
-		app.Log.Error(stackTrace)
-
 		log.Fatal(fmt.Sprintf("%s\n\n%s", app.Tr.ErrorMessage, stackTrace))
 	}
 }
