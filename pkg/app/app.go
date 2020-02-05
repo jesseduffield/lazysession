@@ -19,13 +19,12 @@ const chosenDirFilename = "chosen_dir"
 
 // App holds everything we need to function
 type App struct {
-	g                         *gocui.Gui
-	state                     State
-	views                     Views
-	config                    *config.AppConfig
-	askUserToCopyBashFunction bool
-	Log                       *logrus.Entry
-	Tr                        i18n.TranslationSet
+	g      *gocui.Gui
+	state  State
+	views  Views
+	config *config.AppConfig
+	Log    *logrus.Entry
+	Tr     i18n.TranslationSet
 }
 
 // State holds the app's state
@@ -33,16 +32,10 @@ type State struct {
 	FavDirs []string `json:"favDirs"`
 }
 
-// MainView is the main view
-type MainView struct {
-	v      *gocui.View
-	cursor int
-	list   []string
-}
-
 // Views stores our views
 type Views struct {
-	main MainView
+	main   *gocui.View
+	buffer *gocui.View
 }
 
 // NewApp returns a new App
@@ -50,7 +43,7 @@ func NewApp(config *config.AppConfig) (*App, error) {
 	// no idea why I need to set this: potentially because I invokve the color package before the gui is instantiated
 	color.NoColor = false
 
-	logger := log.NewLogger(config, "23432119147a4367abf7c0de2aa99a2d")
+	logger := log.NewLogger(config)
 
 	tr := i18n.NewTranslationSet(logger)
 

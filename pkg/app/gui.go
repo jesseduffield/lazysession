@@ -9,9 +9,8 @@ import (
 
 func (app *App) refreshMain() error {
 	app.update(func() error {
-		app.views.main.v.Clear()
-		fmt.Fprint(app.views.main.v, "test")
-		app.views.main.v.SetCursor(0, app.views.main.cursor)
+		app.views.main.Clear()
+		fmt.Fprint(app.views.main, "test")
 		return nil
 	})
 	return nil
@@ -19,13 +18,13 @@ func (app *App) refreshMain() error {
 
 func (app *App) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", -1, maxY-len(app.state.FavDirs)-1, maxX, maxY, 0); err != nil {
+	if v, err := g.SetView("main", -1, maxY-1, maxX, maxY, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
 		v.Frame = false
 		v.Highlight = true
-		app.views.main.v = v
+		app.views.main = v
 
 		app.refreshMain()
 	}

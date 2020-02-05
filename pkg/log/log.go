@@ -11,7 +11,7 @@ import (
 )
 
 // NewLogger returns a new logger
-func NewLogger(config *config.AppConfig, rollrusHook string) *logrus.Entry {
+func NewLogger(config *config.AppConfig) *logrus.Entry {
 	var log *logrus.Logger
 	if true || config.Debug || os.Getenv("DEBUG") == "TRUE" {
 		log = newDevelopmentLogger(config)
