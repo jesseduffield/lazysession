@@ -103,7 +103,7 @@ func (app *App) Run() error {
 	defer g.Close()
 
 	app.g = g
-	app.g.Cursor = true
+	// app.g.Cursor = true // TODO: restore
 	app.g.SetManagerFunc(app.layout)
 	app.setKeybindings()
 

@@ -313,8 +313,6 @@ func (v *View) Write(p []byte) (n int, err error) {
 			if len(v.lines[v.cy]) == 0 {
 				v.lines[v.cy] = append(v.lines[v.cy], cell{})
 			}
-			if v.name == "main" {
-			}
 			for _, cell := range cells {
 				if cell.chr == 8 {
 					if v.cx > 0 {

@@ -9,11 +9,12 @@ import (
 
 func (app *App) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", 0, 0, maxX, maxY, 0); err != nil {
+	if v, err := g.SetView("main", 0, 0, maxX-1, maxY-1, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
-		v.Frame = false
+		v.Frame = true
+		v.Autoscroll = true
 		v.Highlight = true
 		app.views.main = v
 
@@ -36,7 +37,7 @@ func (app *App) onFirstRender() {
 	}()
 
 	// TODO, get gocui to receive a callback on taint so that we don't need to poll
-	ticker := time.NewTicker(time.Millisecond * 100)
+	ticker := time.NewTicker(time.Millisecond * 30)
 	for range ticker.C {
 		app.g.Update(func(*gocui.Gui) error {
 			return nil
