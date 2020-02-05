@@ -8,7 +8,7 @@ github.com/fatih/color
 github.com/go-errors/errors
 # github.com/imdario/mergo v0.3.8
 github.com/imdario/mergo
-# github.com/jesseduffield/gocui v0.3.1-0.20200205100510-599b1458db46
+# github.com/jesseduffield/gocui v0.3.1-0.20200205120724-d229cee5e470
 github.com/jesseduffield/gocui
 # github.com/jesseduffield/pty v1.2.1
 github.com/jesseduffield/pty

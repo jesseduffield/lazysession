@@ -7,7 +7,7 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/go-errors/errors v1.0.1
 	github.com/imdario/mergo v0.3.8
-	github.com/jesseduffield/gocui v0.3.1-0.20200205100510-599b1458db46
+	github.com/jesseduffield/gocui v0.3.1-0.20200205120724-d229cee5e470
 	github.com/jesseduffield/pty v1.2.1
 	github.com/jesseduffield/termbox-go v0.0.0-20200130214842-1d31d1faa3c9 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect

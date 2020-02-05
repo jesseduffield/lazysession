@@ -15,7 +15,6 @@ func (app *App) layout(g *gocui.Gui) error {
 		}
 		v.Frame = true
 		v.Autoscroll = true
-		v.Highlight = true
 		app.views.main = v
 
 		app.g.SetCurrentView("main")

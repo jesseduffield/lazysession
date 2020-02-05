@@ -14,6 +14,10 @@ github.com/jesseduffield/gocui v0.3.0 h1:l7wH8MKR2p+ozuZdtdhQiX7szILbv50vkMk1tg2
 github.com/jesseduffield/gocui v0.3.0/go.mod h1:2RtZznzYKt8RLRwvFiSkXjU0Ei8WwHdubgnlaYH47dw=
 github.com/jesseduffield/gocui v0.3.1-0.20200205100510-599b1458db46 h1:7TXa3r61qBy/3tMJOhzJ45dGwW7Zi93WHmSyjg2ImcU=
 github.com/jesseduffield/gocui v0.3.1-0.20200205100510-599b1458db46/go.mod h1:2RtZznzYKt8RLRwvFiSkXjU0Ei8WwHdubgnlaYH47dw=
+github.com/jesseduffield/gocui v0.3.1-0.20200205120614-4299c489cce0 h1:xyTXFj4sMd8hUTEXJm53RJ7lX0NsZVoU6Y5Sc7c/RMk=
+github.com/jesseduffield/gocui v0.3.1-0.20200205120614-4299c489cce0/go.mod h1:2RtZznzYKt8RLRwvFiSkXjU0Ei8WwHdubgnlaYH47dw=
+github.com/jesseduffield/gocui v0.3.1-0.20200205120724-d229cee5e470 h1:4y4zEZVviaqxbHU95UidYoRLOvxTfqA+pcJI9OewxQs=
+github.com/jesseduffield/gocui v0.3.1-0.20200205120724-d229cee5e470/go.mod h1:2RtZznzYKt8RLRwvFiSkXjU0Ei8WwHdubgnlaYH47dw=
 github.com/jesseduffield/pty v1.2.1 h1:7xYBiwNH0PpWqC8JmvrPq1a/ksNqyCavzWu9pbBGYWI=
 github.com/jesseduffield/pty v1.2.1/go.mod h1:7jlS40+UhOqkZJDIG1B/H21xnuET/+fvbbnHCa8wSIo=
 github.com/jesseduffield/termbox-go v0.0.0-20200130214842-1d31d1faa3c9 h1:iBBk1lhFwjwJw//J2m1yyz9S368GeXQTpMVACTyQMh0=
