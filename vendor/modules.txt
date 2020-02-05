@@ -1,0 +1,43 @@
+# github.com/cloudfoundry/jibber_jabber v0.0.0-20151120183258-bcc4c8345a21
+github.com/cloudfoundry/jibber_jabber
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
+# github.com/fatih/color v1.9.0
+github.com/fatih/color
+# github.com/go-errors/errors v1.0.1
+github.com/go-errors/errors
+# github.com/imdario/mergo v0.3.8
+github.com/imdario/mergo
+# github.com/jesseduffield/gocui v0.3.1-0.20200205100510-599b1458db46
+github.com/jesseduffield/gocui
+# github.com/jesseduffield/termbox-go v0.0.0-20200130214842-1d31d1faa3c9
+github.com/jesseduffield/termbox-go
+# github.com/konsorten/go-windows-terminal-sequences v1.0.2
+github.com/konsorten/go-windows-terminal-sequences
+# github.com/mattn/go-colorable v0.1.4
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.11
+github.com/mattn/go-isatty
+# github.com/mattn/go-runewidth v0.0.8
+github.com/mattn/go-runewidth
+# github.com/nicksnyder/go-i18n/v2 v2.0.3
+github.com/nicksnyder/go-i18n/v2/i18n
+github.com/nicksnyder/go-i18n/v2/internal
+github.com/nicksnyder/go-i18n/v2/internal/plural
+# github.com/pmezard/go-difflib v1.0.0
+github.com/pmezard/go-difflib/difflib
+# github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
+github.com/shibukawa/configdir
+# github.com/sirupsen/logrus v1.4.2
+github.com/sirupsen/logrus
+# github.com/stretchr/testify v1.4.0
+github.com/stretchr/testify/assert
+# golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5
+golang.org/x/sys/unix
+# golang.org/x/text v0.3.2
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/tag
+golang.org/x/text/language
+# gopkg.in/yaml.v2 v2.2.8
+gopkg.in/yaml.v2
