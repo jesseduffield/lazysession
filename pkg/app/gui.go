@@ -14,6 +14,7 @@ func (app *App) layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Frame = true
+		v.Wrap = false
 		v.Autoscroll = true
 		app.views.main = v
 
@@ -29,10 +30,6 @@ func (app *App) onFirstRender() {
 		if err := app.runCommandInPty(app.views.main); err != nil {
 			panic(err)
 		}
-
-		app.update(func() error {
-			return gocui.ErrQuit
-		})
 	}()
 
 	// TODO, get gocui to receive a callback on taint so that we don't need to poll

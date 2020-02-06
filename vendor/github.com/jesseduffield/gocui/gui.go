@@ -726,6 +726,9 @@ func (g *Gui) drawSubtitle(v *View, fgColor, bgColor Attribute) error {
 // draw manages the cursor and calls the draw function of a view.
 func (g *Gui) draw(v *View) error {
 	if g.Cursor {
+		// if curview := g.currentView; curview != nil {
+		// 	termbox.SetCursor(curview.cx, curview.cy)
+		// }
 		if curview := g.currentView; curview != nil {
 			vMaxX, vMaxY := curview.Size()
 			if curview.cx < 0 {
@@ -734,9 +737,13 @@ func (g *Gui) draw(v *View) error {
 				curview.cx = vMaxX - 1
 			}
 			if curview.cy < 0 {
+				curview.log.Warn("setting cy to 0 in draw function")
 				curview.cy = 0
+				v.padCellsForNewCy()
 			} else if curview.cy >= vMaxY {
+				curview.log.Warn("setting cy to vMaxY-1 in draw function")
 				curview.cy = vMaxY - 1
+				v.padCellsForNewCy()
 			}
 
 			gMaxX, gMaxY := g.Size()

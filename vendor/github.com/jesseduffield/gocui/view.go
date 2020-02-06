@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-errors/errors"
 
 	"github.com/jesseduffield/termbox-go"
@@ -208,6 +209,7 @@ func (v *View) SetCursor(x, y int) error {
 		return nil
 	}
 	v.cx = x
+	v.log.Warn("setting cy to: ", y)
 	v.cy = y
 	return nil
 }
@@ -233,6 +235,12 @@ func (v *View) Origin() (x, y int) {
 	return v.ox, v.oy
 }
 
+func (v *View) padCellsForNewCy() {
+	if v.cx > len(v.lines[v.cy]) {
+		v.lines[v.cy] = append(v.lines[v.cy], make([]cell, v.cx-len(v.lines[v.cy]))...)
+	}
+}
+
 // Write appends a byte slice into the view's internal buffer. Because
 // View implements the io.Writer interface, it can be passed as parameter
 // of functions like fmt.Fprintf, fmt.Fprintln, io.Copy, etc. Clear must
@@ -246,6 +254,13 @@ func (v *View) Write(p []byte) (n int, err error) {
 		v.lines = make([][]cell, 1) // not sure why we're doing that
 	}
 
+	sanityCheck := func() {
+		if v.cx > len(v.lines[v.cy]) {
+			v.log.Warn("FAILED! y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
+			panic("cx too big")
+		}
+	}
+
 	for _, ch := range bytes.Runes(p) {
 		switch ch {
 		case '\n':
@@ -254,83 +269,145 @@ func (v *View) Write(p []byte) (n int, err error) {
 			}
 			v.cy += 1
 			v.cx = 0
+			sanityCheck()
 		case '\r':
 			if v.IgnoreCarriageReturns {
 				continue
 			}
 			v.cx = 0
+			sanityCheck()
 		default:
 			cells := v.parseInput(ch)
 			if v.ei.instruction.kind != NONE {
 				switch v.ei.instruction.kind {
 				case CURSOR_UP:
+					v.log.Warn("moving cursor up")
 					toMoveUp := v.ei.instruction.param1
+					if toMoveUp == 0 {
+						toMoveUp = 1
+					}
 					// if we are already in the top line there's nothing we can do: so continue
 					if v.cy-toMoveUp <= 0 {
 						v.cy = 0
 					} else {
 						v.cy -= toMoveUp
 					}
+					v.padCellsForNewCy()
+					sanityCheck()
 				case CURSOR_DOWN:
+					v.log.Warn("moving cursor up")
 					toMoveDown := v.ei.instruction.param1
+					if toMoveDown == 0 {
+						toMoveDown = 1
+					}
 					for i := 0; i < toMoveDown; i++ {
 						if v.cy == len(v.lines)-1 {
 							v.lines = append(v.lines, nil)
 						}
 						v.cy++
 					}
+					v.padCellsForNewCy()
+					sanityCheck()
 
 				case CURSOR_LEFT:
 					toMoveLeft := v.ei.instruction.param1
+					if toMoveLeft == 0 {
+						toMoveLeft = 1
+					}
 					if v.cx-toMoveLeft <= 0 {
 						v.cx = 0
 					} else {
 						v.cx -= toMoveLeft
 					}
+					sanityCheck()
 				case CURSOR_RIGHT:
 					toMoveRight := v.ei.instruction.param1
+					if toMoveRight == 0 {
+						toMoveRight = 1
+					}
 					for i := 0; i < toMoveRight; i++ {
 						if v.cx == len(v.lines[v.cy]) {
 							v.lines[v.cy] = append(v.lines[v.cy], cell{})
 						}
 						v.cx++
 					}
-				case ERASE_TO_END_OF_LINE:
-					v.lines[v.cy] = v.lines[v.cy][0:v.cx]
+					sanityCheck()
+				case ERASE_IN_LINE:
+					code := v.ei.instruction.param1
+					// need to check if we should delete the character at the cursor as well. I will assume that we don't (cos it's easier code-wise)
+					switch code {
+					case 0:
+						v.log.Warn("line length:", len(v.lines[v.cy]))
+						v.log.Warn("cx:", v.cx)
+						v.lines[v.cy] = v.lines[v.cy][0:v.cx]
+						sanityCheck()
+					case 1:
+						v.lines[v.cy] = append(make([]cell, v.cx), v.lines[v.cy][v.cx:]...)
+						sanityCheck()
+					case 2:
+						// need to clear line but retain cursor x position
+						// so we'll pad everything out to the left
+						v.lines[v.cy] = make([]cell, v.cx+1)
+						sanityCheck()
+					}
+
 				case CLEAR_SCREEN:
+					v.log.Warn("clearing screen")
 					v.lines = make([][]cell, 1)
 					v.cx = 0
 					v.cy = 0
+					sanityCheck()
+				case INSERT_CHARACTER:
+					v.log.Warn("inserting character")
+					toInsert := v.ei.instruction.param1
+					if toInsert == 0 {
+						toInsert = 1
+					}
+					v.lines[v.cy] = append(v.lines[v.cy][:v.cx], append(make([]cell, toInsert), v.lines[v.cy][v.cx:]...)...)
+				case DELETE:
+					v.log.Warn("deleting characters")
+					toDelete := v.ei.instruction.param1
+					if toDelete == 0 {
+						toDelete = 1
+					}
+					if v.cx+toDelete > len(v.lines[v.cy]) {
+						toDelete = len(v.lines[v.cy]) - v.cx
+					}
+					v.lines[v.cy] = append(v.lines[v.cy][:v.cx], v.lines[v.cy][v.cx+toDelete:]...)
 				default:
 					panic("instruction not understood")
 				}
 				v.ei.instructionRead()
+				continue
 			}
 			if cells == nil {
 				continue
 			}
 
-			if len(v.lines[v.cy]) == 0 {
-				v.lines[v.cy] = append(v.lines[v.cy], cell{})
-			}
 			for _, cell := range cells {
-				if cell.chr == 8 {
+				v.log.Warn("y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]), ", cell ch: ", cell.chr)
+				if cell.chr == 7 {
+					// bell: can't do anything
+					continue
+				}
+				if cell.chr == '\b' {
 					if v.cx > 0 {
 						v.cx--
-						v.lines[v.cy] = v.lines[v.cy][0 : len(v.lines[v.cy])-1]
 					}
 					continue
 				}
-				if v.cx == len(v.lines[v.cy])-1 {
+				if v.cx == len(v.lines[v.cy]) {
 					v.lines[v.cy] = append(v.lines[v.cy], cell)
-				} else if v.cx < len(v.lines[v.cy])-1 {
+				} else if v.cx < len(v.lines[v.cy]) {
 					v.lines[v.cy][v.cx] = cell
 				} else {
-					panic(v.name + ": above length for some reason")
+					// TODO: decide whether this matters
+					// panic(v.name + ": above length for some reason")
 				}
 
 				v.cx++
 			}
+			sanityCheck()
 		}
 	}
 
@@ -353,6 +430,7 @@ func (v *View) parseInput(ch rune) []cell {
 				chr:     r,
 			}
 			cells = append(cells, c)
+			panic(spew.Sdump(v.ei.runes()))
 		}
 		v.ei.reset()
 	} else {

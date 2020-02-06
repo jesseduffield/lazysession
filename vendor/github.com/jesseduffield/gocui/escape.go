@@ -5,6 +5,7 @@
 package gocui
 
 import (
+	"fmt"
 	"strconv"
 	"sync"
 
@@ -32,9 +33,11 @@ const (
 	CURSOR_RIGHT
 	CURSOR_MOVE
 	CLEAR_SCREEN
-	ERASE_TO_END_OF_LINE
+	ERASE_IN_LINE
 	SAVE_CURSOR_POS
 	RESTORE_CURSOR_POS
+	INSERT_CHARACTER
+	DELETE
 )
 
 type instruction struct {
@@ -152,11 +155,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		case ch == 'm':
 			ei.csiParam = append(ei.csiParam, "0")
 		case ch == 'K':
-			ei.instruction.kind = ERASE_TO_END_OF_LINE
-
-			ei.state = stateNone
-			ei.csiParam = nil
-			return true, nil
+			ei.csiParam = append(ei.csiParam, "0")
 		case ch == '?':
 			ei.csiParam = append(ei.csiParam, "")
 		default:
@@ -205,10 +204,33 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		case ch == 'J':
 			ei.instruction.kind = CLEAR_SCREEN
 
+			p, err := strconv.Atoi(ei.csiParam[0])
+			if err != nil {
+				return false, errCSIParseError
+			}
+
+			if p != 2 {
+				panic(fmt.Sprintf("clear screen param not yet supported: %d", p))
+			}
+
 			ei.state = stateNone
 			ei.csiParam = nil
 			return true, nil
 
+		case ch == 'S':
+			panic("got an S")
+
+		case ch == 'K':
+			p, err := strconv.Atoi(ei.csiParam[0])
+			if err != nil {
+				return false, errCSIParseError
+			}
+			ei.instruction.kind = ERASE_IN_LINE
+			ei.instruction.param1 = p
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
 		case ch == 'h':
 			if ei.csiParam[0] == "?25" {
 				// wants us to show the cursor but we never hide it in the first place
@@ -225,6 +247,36 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			} else {
 				return false, errCSIParseError
 			}
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+
+		case ch == '@':
+			p, err := strconv.Atoi(ei.csiParam[0])
+			if err != nil {
+				return false, errCSIParseError
+			}
+
+			if p > 1 {
+				panic("don't yet support inserting more than one character")
+			}
+
+			ei.instruction.kind = INSERT_CHARACTER
+			ei.instruction.param1 = p
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+
+		case ch == 'P':
+			p, err := strconv.Atoi(ei.csiParam[0])
+			if err != nil {
+				return false, errCSIParseError
+			}
+
+			ei.instruction.kind = DELETE
+			ei.instruction.param1 = p
+
 			ei.state = stateNone
 			ei.csiParam = nil
 			return true, nil
