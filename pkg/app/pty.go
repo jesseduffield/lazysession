@@ -20,6 +20,7 @@ type inputReader struct {
 }
 
 func (r *inputReader) Read(buf []byte) (int, error) {
+	// r.log.Warn("reading")
 	n, err := r.innerReader.Read(buf)
 	if err != nil {
 		// we're trying to emulate stdin so we're going to swallow an EOF error

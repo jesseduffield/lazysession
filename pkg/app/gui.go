@@ -2,6 +2,7 @@ package app
 
 import (
 	"log"
+	"math"
 	"time"
 
 	"github.com/jesseduffield/gocui"
@@ -58,4 +59,46 @@ func (app *App) setKeybindings() {
 			log.Panicln(err)
 		}
 	}
+	if err := app.g.SetKeybinding("main", nil, gocui.MouseWheelDown, gocui.ModNone, app.scrollMainDown); err != nil {
+		log.Panicln(err)
+	}
+	if err := app.g.SetKeybinding("main", nil, gocui.MouseWheelUp, gocui.ModNone, app.scrollMainUp); err != nil {
+		log.Panicln(err)
+	}
+
+}
+
+func (app *App) scrollMainDown(g *gocui.Gui, v *gocui.View) error {
+	return app.scrollDownView("main")
+}
+
+func (app *App) scrollMainUp(g *gocui.Gui, v *gocui.View) error {
+	return app.scrollUpView("main")
+}
+
+func (app *App) scrollUpView(viewName string) error {
+	mainView, _ := app.g.View(viewName)
+	ox, oy := mainView.Origin()
+	scrollHeight := 1
+	newOy := int(math.Max(0, float64(oy-scrollHeight)))
+	return mainView.SetOrigin(ox, newOy)
+}
+
+func (app *App) scrollDownView(viewName string) error {
+	mainView, _ := app.g.View(viewName)
+	ox, oy := mainView.Origin()
+	y := oy
+	scrollPastBottom := true
+	if !scrollPastBottom {
+		_, sy := mainView.Size()
+		y += sy
+	}
+	scrollHeight := 1
+	if y < mainView.LinesHeight() {
+		if err := mainView.SetOrigin(ox, oy+scrollHeight); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

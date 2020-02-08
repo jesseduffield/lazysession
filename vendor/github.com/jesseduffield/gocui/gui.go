@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-errors/errors"
 
 	"github.com/jesseduffield/termbox-go"
@@ -763,6 +764,7 @@ func (g *Gui) onKey(ev *termbox.Event) error {
 		if g.currentView != nil {
 			// if we have a current view, and it's a pty view, get the event's bytes and write them to the input buffer
 			if g.currentView.Pty {
+				g.log.Warn(spew.Sdump(ev.Bytes))
 				g.currentView.InputBuf.Write(ev.Bytes)
 			}
 
