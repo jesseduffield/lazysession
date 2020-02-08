@@ -104,6 +104,7 @@ func (app *App) Run() error {
 
 	app.g = g
 	app.g.Cursor = true
+	app.g.Mouse = true
 	app.g.SetManagerFunc(app.layout)
 	app.setKeybindings()
 

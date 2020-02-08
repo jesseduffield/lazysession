@@ -108,6 +108,15 @@ type View struct {
 	Context string // this is for assigning keybindings to a view only in certain contexts
 
 	log *logrus.Entry
+
+	// Pty tells us whether we have a pty running within the view. When Pty is set,
+	// we will catch keybindings set on the view, but all other keypresses (including
+	// those for which there are global keybindings) will be forwarded to the
+	// underlying pty as the original byte string. When Pty is set, we will also
+	// directly redraw the view when it is written to
+	Pty bool
+
+	InputBuf bytes.Buffer
 }
 
 type viewLine struct {

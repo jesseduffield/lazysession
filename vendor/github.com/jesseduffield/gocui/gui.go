@@ -731,9 +731,6 @@ func (g *Gui) draw(v *View) error {
 	}
 	if g.Cursor {
 		if curview := g.currentView; curview != nil {
-			vMaxX, vMaxY := curview.Size()
-			curview.log.Warn("view maxX: ", vMaxX, ", view maxY: ", vMaxY, ", cx: ", curview.cx, ", cy: ", curview.cy, ", ox: ", curview.ox, ", oy: ", curview.oy)
-
 			gMaxX, gMaxY := g.Size()
 			ox, oy := curview.Origin()
 			cx, cy := curview.x0+curview.cx+1-ox, curview.y0+curview.cy+1-oy
@@ -763,8 +760,15 @@ func (g *Gui) onKey(ev *termbox.Event) error {
 		if matched {
 			break
 		}
-		if g.currentView != nil && g.currentView.Editable && g.currentView.Editor != nil {
-			g.currentView.Editor.Edit(g.currentView, Key(ev.Key), ev.Ch, Modifier(ev.Mod))
+		if g.currentView != nil {
+			// if we have a current view, and it's a pty view, get the event's bytes and write them to the input buffer
+			if g.currentView.Pty {
+				g.currentView.InputBuf.Write(ev.Bytes)
+			}
+
+			if g.currentView.Editable && g.currentView.Editor != nil {
+				g.currentView.Editor.Edit(g.currentView, Key(ev.Key), ev.Ch, Modifier(ev.Mod))
+			}
 		}
 	case termbox.EventMouse:
 		mx, my := ev.MouseX, ev.MouseY
@@ -813,7 +817,7 @@ func (g *Gui) execKeybindings(v *View, ev *termbox.Event) (matched bool, err err
 		if kb.matchView(v.ParentView) {
 			matchingParentViewKb = kb
 		}
-		if kb.viewName == "" && ((v != nil && !v.Editable) || (kb.ch == 0 && kb.key != KeyCtrlU && kb.key != KeyCtrlA && kb.key != KeyCtrlE)) {
+		if kb.viewName == "" && ((v != nil && !v.Editable) || (kb.ch == 0 && kb.key != KeyCtrlU && kb.key != KeyCtrlA && kb.key != KeyCtrlE)) && !v.Pty {
 			globalKb = kb
 		}
 	}
