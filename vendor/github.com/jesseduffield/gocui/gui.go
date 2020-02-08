@@ -725,29 +725,18 @@ func (g *Gui) drawSubtitle(v *View, fgColor, bgColor Attribute) error {
 
 // draw manages the cursor and calls the draw function of a view.
 func (g *Gui) draw(v *View) error {
+	v.clearRunes()
+	if err := v.draw(); err != nil {
+		return err
+	}
 	if g.Cursor {
-		// if curview := g.currentView; curview != nil {
-		// 	termbox.SetCursor(curview.cx, curview.cy)
-		// }
 		if curview := g.currentView; curview != nil {
 			vMaxX, vMaxY := curview.Size()
-			if curview.cx < 0 {
-				curview.cx = 0
-			} else if curview.cx >= vMaxX {
-				curview.cx = vMaxX - 1
-			}
-			if curview.cy < 0 {
-				curview.log.Warn("setting cy to 0 in draw function")
-				curview.cy = 0
-				v.padCellsForNewCy()
-			} else if curview.cy >= vMaxY {
-				curview.log.Warn("setting cy to vMaxY-1 in draw function")
-				curview.cy = vMaxY - 1
-				v.padCellsForNewCy()
-			}
+			curview.log.Warn("view maxX: ", vMaxX, ", view maxY: ", vMaxY, ", cx: ", curview.cx, ", cy: ", curview.cy, ", ox: ", curview.ox, ", oy: ", curview.oy)
 
 			gMaxX, gMaxY := g.Size()
-			cx, cy := curview.x0+curview.cx+1, curview.y0+curview.cy+1
+			ox, oy := curview.Origin()
+			cx, cy := curview.x0+curview.cx+1-ox, curview.y0+curview.cy+1-oy
 			if cx >= 0 && cx < gMaxX && cy >= 0 && cy < gMaxY {
 				termbox.SetCursor(cx, cy)
 			} else {
@@ -755,12 +744,8 @@ func (g *Gui) draw(v *View) error {
 			}
 		}
 	} else {
+		// TODO: verify that this shouldn't be inside the above if block
 		termbox.HideCursor()
-	}
-
-	v.clearRunes()
-	if err := v.draw(); err != nil {
-		return err
 	}
 	return nil
 }

@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-errors/errors"
 
 	"github.com/jesseduffield/termbox-go"
@@ -241,6 +240,56 @@ func (v *View) padCellsForNewCy() {
 	}
 }
 
+func (v *View) moveCursorHorizontally(n int) {
+	if n > 0 {
+		v.moveCursorRight(n)
+	}
+	v.moveCursorLeft(-n)
+}
+
+func (v *View) moveCursorVertically(n int) {
+	if n > 0 {
+		v.moveCursorDown(n)
+	}
+	v.moveCursorUp(-n)
+}
+
+func (v *View) moveCursorRight(n int) {
+	for i := 0; i < n; i++ {
+		if v.cx == len(v.lines[v.cy]) {
+			v.lines[v.cy] = append(v.lines[v.cy], cell{})
+		}
+		v.cx++
+	}
+}
+
+func (v *View) moveCursorLeft(n int) {
+	if v.cx-n <= 0 {
+		v.cx = 0
+	} else {
+		v.cx -= n
+	}
+}
+
+func (v *View) moveCursorDown(n int) {
+	for i := 0; i < n; i++ {
+		if v.cy == len(v.lines)-1 {
+			v.lines = append(v.lines, nil)
+		}
+		v.cy++
+	}
+	v.padCellsForNewCy()
+}
+
+func (v *View) moveCursorUp(n int) {
+	if v.cy-n <= 0 {
+		v.cy = 0
+	} else {
+		v.cy -= n
+	}
+	v.padCellsForNewCy()
+}
+
 // Write appends a byte slice into the view's internal buffer. Because
 // View implements the io.Writer interface, it can be passed as parameter
 // of functions like fmt.Fprintf, fmt.Fprintln, io.Copy, etc. Clear must
@@ -286,13 +335,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 					if toMoveUp == 0 {
 						toMoveUp = 1
 					}
-					// if we are already in the top line there's nothing we can do: so continue
-					if v.cy-toMoveUp <= 0 {
-						v.cy = 0
-					} else {
-						v.cy -= toMoveUp
-					}
-					v.padCellsForNewCy()
+					v.moveCursorUp(toMoveUp)
 					sanityCheck()
 				case CURSOR_DOWN:
 					v.log.Warn("moving cursor up")
@@ -300,13 +343,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 					if toMoveDown == 0 {
 						toMoveDown = 1
 					}
-					for i := 0; i < toMoveDown; i++ {
-						if v.cy == len(v.lines)-1 {
-							v.lines = append(v.lines, nil)
-						}
-						v.cy++
-					}
-					v.padCellsForNewCy()
+					v.moveCursorDown(toMoveDown)
 					sanityCheck()
 
 				case CURSOR_LEFT:
@@ -314,23 +351,24 @@ func (v *View) Write(p []byte) (n int, err error) {
 					if toMoveLeft == 0 {
 						toMoveLeft = 1
 					}
-					if v.cx-toMoveLeft <= 0 {
-						v.cx = 0
-					} else {
-						v.cx -= toMoveLeft
-					}
+					v.moveCursorLeft(toMoveLeft)
 					sanityCheck()
 				case CURSOR_RIGHT:
 					toMoveRight := v.ei.instruction.param1
 					if toMoveRight == 0 {
 						toMoveRight = 1
 					}
-					for i := 0; i < toMoveRight; i++ {
-						if v.cx == len(v.lines[v.cy]) {
-							v.lines[v.cy] = append(v.lines[v.cy], cell{})
-						}
-						v.cx++
-					}
+					v.moveCursorRight(toMoveRight)
+					sanityCheck()
+				case CURSOR_MOVE:
+					x := v.ei.instruction.param1
+					y := v.ei.instruction.param2
+					v.log.Warn("x: ", x)
+					v.log.Warn("y: ", y)
+					v.moveCursorVertically(y - v.cy)
+					v.log.Warn("after moving vertically: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
+					v.moveCursorHorizontally(x - v.cx)
+					v.log.Warn("after moving horizontally: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
 					sanityCheck()
 				case ERASE_IN_LINE:
 					code := v.ei.instruction.param1
@@ -402,7 +440,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.lines[v.cy][v.cx] = cell
 				} else {
 					// TODO: decide whether this matters
-					// panic(v.name + ": above length for some reason")
+					panic(v.name + ": above length for some reason")
 				}
 
 				v.cx++
@@ -423,6 +461,7 @@ func (v *View) parseInput(ch rune) []cell {
 	isEscape, err := v.ei.parseOne(ch)
 	if err != nil {
 		// there is an error parsing an escape sequence, ouput all the escape characters so far as a string
+		// panic(string(v.ei.runes()[1:]))
 		for _, r := range v.ei.runes() {
 			c := cell{
 				fgColor: v.FgColor,
@@ -430,7 +469,6 @@ func (v *View) parseInput(ch rune) []cell {
 				chr:     r,
 			}
 			cells = append(cells, c)
-			panic(spew.Sdump(v.ei.runes()))
 		}
 		v.ei.reset()
 	} else {

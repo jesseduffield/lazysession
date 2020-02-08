@@ -158,6 +158,8 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.csiParam = append(ei.csiParam, "0")
 		case ch == '?':
 			ei.csiParam = append(ei.csiParam, "")
+		case ch == 'H':
+			ei.csiParam = append(ei.csiParam, "0")
 		default:
 			return false, errCSIParseError
 		}
@@ -276,6 +278,31 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 
 			ei.instruction.kind = DELETE
 			ei.instruction.param1 = p
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+
+		case ch == 'H':
+			p := 0
+			if len(ei.csiParam) > 0 {
+				p, err = strconv.Atoi(ei.csiParam[0])
+				if err != nil {
+					return false, errCSIParseError
+				}
+			}
+
+			p2 := 0
+			if len(ei.csiParam) > 1 {
+				p2, err = strconv.Atoi(ei.csiParam[1])
+				if err != nil {
+					return false, errCSIParseError
+				}
+			}
+
+			ei.instruction.kind = CURSOR_MOVE
+			ei.instruction.param1 = p
+			ei.instruction.param1 = p2
 
 			ei.state = stateNone
 			ei.csiParam = nil
