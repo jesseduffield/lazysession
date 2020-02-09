@@ -43,6 +43,9 @@ func (app *App) onFirstRender() {
 				return err
 			})
 		}
+
+		// doing this so that if the buffer is focused we can press 'q' to exit
+		app.views.buffer.Editable = false
 	}()
 
 	// TODO, get gocui to receive a callback on taint so that we don't need to poll
