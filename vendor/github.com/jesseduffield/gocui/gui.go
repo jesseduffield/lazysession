@@ -765,7 +765,7 @@ func (g *Gui) onKey(ev *termbox.Event) error {
 			// if we have a current view, and it's a pty view, get the event's bytes and write them to the input buffer
 			if g.currentView.Pty {
 				g.log.Warn(spew.Sdump(ev.Bytes))
-				g.currentView.InputBuf.Write(ev.Bytes)
+				g.currentView.StdinWriter.Write(ev.Bytes)
 			}
 
 			if g.currentView.Editable && g.currentView.Editor != nil {
@@ -789,9 +789,11 @@ func (g *Gui) onKey(ev *termbox.Event) error {
 				}
 			}
 		}
-		if err := v.SetCursor(mx-v.x0-1, my-v.y0-1); err != nil {
-			return err
-		}
+		// TODO: consider restoring this for other apps
+		// ox, oy := v.Origin()
+		// if err := v.SetCursor(mx-v.x0-1+ox, my-v.y0-1+oy); err != nil {
+		// 	return err
+		// }
 		if _, err := g.execKeybindings(v, ev); err != nil {
 			return err
 		}

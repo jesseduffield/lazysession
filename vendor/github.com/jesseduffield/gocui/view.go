@@ -116,7 +116,10 @@ type View struct {
 	// directly redraw the view when it is written to
 	Pty bool
 
-	InputBuf bytes.Buffer
+	// StdinWriter is used in conjunction with the Pty flag. When using a pty,
+	// any termbox events not caught by the view will be written to this writer
+	// as the original byte slice.
+	StdinWriter io.Writer
 }
 
 type viewLine struct {

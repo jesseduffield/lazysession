@@ -61,18 +61,8 @@ func (app *App) runCommandInPty(view *gocui.View) error {
 	}()
 	ch <- syscall.SIGWINCH // Initial resize.
 
-	// I need pipe from stdin through a buffer that picks up on certain keypresses (notably scroll up, scroll down, and for now, tab, for switching between the two views. I need that to then end up as a reader. I can just compose a reader and if a scroll. I could start off by having a reader that just logs out the runes one by one.
+	view.StdinWriter = ptmx
 
-	// // Set stdin in raw mode.
-	// oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
-
-	r := &inputReader{innerReader: &view.InputBuf, log: app.Log}
-
-	go func() { _, _ = io.Copy(ptmx, r) }()
 	_, _ = io.Copy(view, ptmx)
 
 	view.Pty = false

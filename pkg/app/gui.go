@@ -65,7 +65,6 @@ func (app *App) setKeybindings() {
 	if err := app.g.SetKeybinding("main", nil, gocui.MouseWheelUp, gocui.ModNone, app.scrollMainUp); err != nil {
 		log.Panicln(err)
 	}
-
 }
 
 func (app *App) scrollMainDown(g *gocui.Gui, v *gocui.View) error {
