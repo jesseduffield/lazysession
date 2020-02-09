@@ -42,6 +42,7 @@ type State struct {
 type Views struct {
 	main   *gocui.View
 	buffer *gocui.View
+	info   *gocui.View
 }
 
 // NewApp returns a new App
@@ -90,6 +91,9 @@ func (app *App) Run() error {
 	if err := app.loadState(); err != nil {
 		return err
 	}
+
+	// setting initial local state
+	app.state.historyIndex = -1
 
 	cmd, err := createCmd()
 	if err != nil {

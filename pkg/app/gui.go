@@ -9,7 +9,7 @@ import (
 
 func (app *App) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", -1, -1, maxX, maxY-3, 0); err != nil {
+	if v, err := g.SetView("main", -1, -1, maxX, maxY-4, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -22,7 +22,7 @@ func (app *App) layout(g *gocui.Gui) error {
 		go app.onFirstRender()
 	}
 
-	if v, err := g.SetView("buffer", 0, maxY-3, maxX-1, maxY-1, 0); err != nil {
+	if v, err := g.SetView("buffer", 0, maxY-4, maxX-1, maxY-2, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -31,6 +31,15 @@ func (app *App) layout(g *gocui.Gui) error {
 		v.Autoscroll = true
 		v.Editable = true
 		app.views.buffer = v
+	}
+
+	if v, err := g.SetView("info", -1, maxY-2, maxX-1, maxY, 0); err != nil {
+		if err.Error() != "unknown view" {
+			return err
+		}
+		v.Frame = false
+		app.views.info = v
+		fmt.Fprint(v, "use tab to switch from the program to the buffer")
 	}
 
 	return nil
@@ -126,12 +135,16 @@ func (app *App) nextHistoryItem(g *gocui.Gui, v *gocui.View) error {
 		fmt.Fprint(app.views.buffer, app.state.History[app.state.historyIndex])
 	} else {
 		fmt.Fprint(app.views.buffer, app.state.currentLine)
+		app.state.historyIndex = -1
 	}
 	return nil
 }
 
 func (app *App) prevHistoryItem(g *gocui.Gui, v *gocui.View) error {
 	if app.state.historyIndex == -1 {
+		if len(app.state.History) == 0 {
+			return nil
+		}
 		app.state.currentLine = app.views.buffer.Buffer()
 		app.state.historyIndex = len(app.state.History) - 1
 	} else if app.state.historyIndex > 0 {
