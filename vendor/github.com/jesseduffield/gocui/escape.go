@@ -34,10 +34,10 @@ const (
 	CURSOR_MOVE
 	CLEAR_SCREEN
 	ERASE_IN_LINE
-	SAVE_CURSOR_POS
-	RESTORE_CURSOR_POS
 	INSERT_CHARACTER
 	DELETE
+	SAVE_CURSOR_POSITION
+	RESTORE_CURSOR_POSITION
 )
 
 type instruction struct {
@@ -156,6 +156,16 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.csiParam = append(ei.csiParam, "1")
 		case ch == 'H', ch == 'm', ch == 'K':
 			ei.csiParam = append(ei.csiParam, "0")
+		case ch == 's':
+			ei.instruction.kind = SAVE_CURSOR_POSITION
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+		case ch == 'u':
+			ei.instruction.kind = RESTORE_CURSOR_POSITION
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
 		default:
 			return false, errCSIParseError
 		}
@@ -231,6 +241,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.csiParam = nil
 			return true, nil
 		case ch == 'h':
+			// see https://vt100.net/docs/vt100-ug/chapter3.html
 			if ei.csiParam[0] == "?25" {
 				// wants us to show the cursor but we never hide it in the first place
 			} else {

@@ -121,6 +121,11 @@ type View struct {
 	// any termbox events not caught by the view will be written to this writer
 	// as the original byte slice.
 	StdinWriter io.Writer
+
+	// these are for when the terminal wants to save the cursor position to restore
+	// it later
+	savedCx int
+	savedCy int
 }
 
 type viewLine struct {
@@ -301,6 +306,15 @@ func (v *View) moveCursorUp(n int) {
 	v.padCellsForNewCy()
 }
 
+func (v *View) moveCursorToPosition(x int, y int) {
+	v.log.Warn("x: ", x)
+	v.log.Warn("y: ", y)
+	v.moveCursorVertically(y - v.cy)
+	v.log.Warn("after moving vertically: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
+	v.moveCursorHorizontally(x - v.cx)
+	v.log.Warn("after moving horizontally: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
+}
+
 // Write appends a byte slice into the view's internal buffer. Because
 // View implements the io.Writer interface, it can be passed as parameter
 // of functions like fmt.Fprintf, fmt.Fprintln, io.Copy, etc. Clear must
@@ -364,12 +378,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 				case CURSOR_MOVE:
 					x := v.ei.instruction.param1
 					y := v.ei.instruction.param2
-					v.log.Warn("x: ", x)
-					v.log.Warn("y: ", y)
-					v.moveCursorVertically(y - v.cy)
-					v.log.Warn("after moving vertically: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
-					v.moveCursorHorizontally(x - v.cx)
-					v.log.Warn("after moving horizontally: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
+					v.moveCursorToPosition(x, y)
 					sanityCheck()
 				case ERASE_IN_LINE:
 					code := v.ei.instruction.param1
@@ -413,6 +422,14 @@ func (v *View) Write(p []byte) (n int, err error) {
 						toDelete = len(v.lines[v.cy]) - v.cx
 					}
 					v.lines[v.cy] = append(v.lines[v.cy][:v.cx], v.lines[v.cy][v.cx+toDelete:]...)
+				case SAVE_CURSOR_POSITION:
+					v.log.Warn("saving cursor position")
+					v.savedCx = v.cx
+					v.savedCy = v.cy
+				case RESTORE_CURSOR_POSITION:
+					v.log.Warn("restoring cursor position")
+					v.moveCursorToPosition(v.savedCx, v.savedCy)
+					sanityCheck()
 				default:
 					panic("instruction not understood")
 				}
