@@ -39,7 +39,9 @@ func (app *App) layout(g *gocui.Gui) error {
 func (app *App) onFirstRender() {
 	go func() {
 		if err := app.runCommandInPty(app.views.main); err != nil {
-			panic(err)
+			app.g.Update(func(*gocui.Gui) error {
+				return err
+			})
 		}
 	}()
 
