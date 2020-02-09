@@ -396,6 +396,14 @@ func (v *View) Write(p []byte) (n int, err error) {
 				case CURSOR_MOVE:
 					y := v.ei.instruction.param1
 					x := v.ei.instruction.param2
+					// these params are 1-indexed so we need to decrement them (0 is left alone)
+					if x > 0 {
+						x--
+					}
+					if y > 0 {
+						y--
+					}
+
 					v.moveCursorToPosition(x, y)
 					sanityCheck()
 				case ERASE_IN_LINE:

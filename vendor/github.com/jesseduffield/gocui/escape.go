@@ -156,7 +156,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.csiParam = append(ei.csiParam, "")
 		case ch == 'A', ch == 'B', ch == 'C', ch == 'D':
 			ei.csiParam = append(ei.csiParam, "1")
-		case ch == 'H', ch == 'm', ch == 'K':
+		case ch == 'H', ch == 'f', ch == 'm', ch == 'K', ch == 'J':
 			ei.csiParam = append(ei.csiParam, "0")
 		case ch == 's':
 			ei.instruction.kind = SAVE_CURSOR_POSITION
@@ -298,7 +298,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.csiParam = nil
 			return true, nil
 
-		case ch == 'H':
+		case ch == 'H', ch == 'f':
 			y := 0
 			if len(ei.csiParam) > 0 {
 				y, err = strconv.Atoi(ei.csiParam[0])
