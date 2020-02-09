@@ -14,7 +14,11 @@ func (app *App) layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Frame = false
-		v.Wrap = true
+		// wrap off works for rails c, not for irb
+		// if we turn on wrap then to get rails c to work we need to act like we have
+		// a really wide window.
+		// for vim you need to be honest about the width, and set wrap to false
+		v.Wrap = false
 		v.Autoscroll = true
 		app.views.main = v
 

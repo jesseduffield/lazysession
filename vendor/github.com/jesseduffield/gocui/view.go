@@ -7,6 +7,7 @@ package gocui
 import (
 	"bytes"
 	"io"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -224,6 +225,7 @@ func (v *View) SetCursor(x, y int) error {
 	if x < 0 || y < 0 {
 		return nil
 	}
+	v.log.Warn("in set cursor, x: ", x)
 	v.cx = x
 	v.cy = y
 	return nil
@@ -282,6 +284,7 @@ func (v *View) moveCursorRight(n int) {
 }
 
 func (v *View) moveCursorLeft(n int) {
+	v.log.Warn("moving cursor left, v.cx: ", v.cx, ", n: ", n)
 	if v.cx-n <= 0 {
 		v.cx = 0
 	} else {
@@ -317,6 +320,14 @@ func (v *View) moveCursorToPosition(x int, y int) {
 	v.log.Warn("after moving horizontally: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
 }
 
+func quoteRunes(runes []rune) string {
+	str := ""
+	for _, r := range runes {
+		str += strconv.QuoteRune(r)
+	}
+	return str
+}
+
 // Write appends a byte slice into the view's internal buffer. Because
 // View implements the io.Writer interface, it can be passed as parameter
 // of functions like fmt.Fprintf, fmt.Fprintln, io.Copy, etc. Clear must
@@ -337,9 +348,12 @@ func (v *View) Write(p []byte) (n int, err error) {
 		}
 	}
 
-	for _, ch := range bytes.Runes(p) {
+	runes := bytes.Runes(p)
+	v.log.Warn(quoteRunes(runes))
+	for _, ch := range runes {
 		switch ch {
 		case '\n':
+			v.log.Warn("newline")
 			if v.cy == len(v.lines)-1 {
 				v.lines = append(v.lines, nil)
 			}
@@ -347,12 +361,14 @@ func (v *View) Write(p []byte) (n int, err error) {
 			v.cx = 0
 			sanityCheck()
 		case '\r':
+			v.log.Warn("carriage return")
 			if v.IgnoreCarriageReturns {
 				continue
 			}
 			v.cx = 0
 			sanityCheck()
 		default:
+
 			cells := v.parseInput(ch)
 			if v.ei.instruction.kind != NONE {
 				switch v.ei.instruction.kind {
