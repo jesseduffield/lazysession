@@ -143,11 +143,13 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		}
 		return false, nil
 	case stateEscape:
-		if ch == '[' {
+		switch ch {
+		case '[':
 			ei.state = stateCSI
 			return true, nil
+		default:
+			return false, errNotCSI
 		}
-		return false, errNotCSI
 	case stateCSI:
 		switch {
 		case ch >= '0' && ch <= '9', ch == '?':
@@ -173,7 +175,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		fallthrough
 	case stateParams:
 		switch {
-		case (ch >= '0' && ch <= '9') || ch == '?':
+		case ch >= '0' && ch <= '9', ch == '?':
 			ei.csiParam[len(ei.csiParam)-1] += string(ch)
 			return true, nil
 
@@ -242,9 +244,14 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			return true, nil
 		case ch == 'h':
 			// see https://vt100.net/docs/vt100-ug/chapter3.html
-			if ei.csiParam[0] == "?25" {
+			switch ei.csiParam[0] {
+			case "?25":
 				// wants us to show the cursor but we never hide it in the first place
-			} else {
+			case "?2004":
+				// it's trying to set bracketed paste mode. Not sure what to do here
+			case "?1049":
+				// switch to alternate screen. unimplemented
+			default:
 				return false, errCSIParseError
 			}
 			ei.state = stateNone

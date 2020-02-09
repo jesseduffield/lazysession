@@ -259,6 +259,7 @@ func (v *View) padCellsForNewCy() {
 func (v *View) moveCursorHorizontally(n int) {
 	if n > 0 {
 		v.moveCursorRight(n)
+		return
 	}
 	v.moveCursorLeft(-n)
 }
@@ -266,6 +267,7 @@ func (v *View) moveCursorHorizontally(n int) {
 func (v *View) moveCursorVertically(n int) {
 	if n > 0 {
 		v.moveCursorDown(n)
+		return
 	}
 	v.moveCursorUp(-n)
 }
@@ -440,22 +442,23 @@ func (v *View) Write(p []byte) (n int, err error) {
 				continue
 			}
 
-			for _, cell := range cells {
-				v.log.Warn("y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]), ", cell ch: ", cell.chr)
-				if cell.chr == 7 {
+			for _, c := range cells {
+				v.log.Warn("y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]), ", cell ch: ", c.chr)
+
+				if c.chr == 7 {
 					// bell: can't do anything
 					continue
 				}
-				if cell.chr == '\b' {
+				if c.chr == '\b' {
 					if v.cx > 0 {
 						v.cx--
 					}
 					continue
 				}
 				if v.cx == len(v.lines[v.cy]) {
-					v.lines[v.cy] = append(v.lines[v.cy], cell)
+					v.lines[v.cy] = append(v.lines[v.cy], c)
 				} else if v.cx < len(v.lines[v.cy]) {
-					v.lines[v.cy][v.cx] = cell
+					v.lines[v.cy][v.cx] = c
 				} else {
 					// TODO: decide whether this matters
 					panic(v.name + ": above length for some reason")
@@ -480,7 +483,6 @@ func (v *View) parseInput(ch rune) []cell {
 	if err != nil {
 		// there is an error parsing an escape sequence, ouput all the escape characters so far as a string
 		v.log.Warn(spew.Sdump(v.ei.runes()[1:]))
-		panic(string(v.ei.runes()[1:]))
 		for _, r := range v.ei.runes() {
 			c := cell{
 				fgColor: v.FgColor,
