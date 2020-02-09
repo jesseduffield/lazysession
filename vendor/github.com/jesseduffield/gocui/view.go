@@ -427,10 +427,32 @@ func (v *View) Write(p []byte) (n int, err error) {
 
 				case CLEAR_SCREEN:
 					v.log.Warn("clearing screen")
-					v.lines = make([][]cell, 1)
-					v.cx = 0
-					v.cy = 0
-					sanityCheck()
+					code := v.ei.instruction.param1
+
+					switch code {
+					case 0:
+						// erase from current position to end of screen, left to right and up to down
+						v.lines[v.cy] = v.lines[v.cy][0:v.cx]
+						v.lines[v.cy] = append(v.lines[v.cy], cell{})
+						if len(v.lines)-1 > v.cy {
+							v.lines = v.lines[:v.cy+1]
+						}
+						sanityCheck()
+					case 1:
+						// TODO: test
+						if v.cy > 0 {
+							v.lines = append(make([][]cell, v.cy), v.lines[v.cy:]...)
+						}
+						v.lines[v.cy] = append(make([]cell, v.cx), v.lines[v.cy][v.cx:]...)
+						sanityCheck()
+					case 2:
+						v.lines = make([][]cell, 1)
+						// TODO: apparently the cursor isn't actually supposed to move here. We'll need to pad this out.
+						v.cx = 0
+						v.cy = 0
+						sanityCheck()
+					}
+
 				case INSERT_CHARACTER:
 					v.log.Warn("inserting character")
 					toInsert := v.ei.instruction.param1

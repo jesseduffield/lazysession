@@ -5,7 +5,6 @@
 package gocui
 
 import (
-	"fmt"
 	"strconv"
 	"sync"
 
@@ -53,6 +52,7 @@ const (
 	stateEscape
 	stateCSI
 	stateParams
+	stateCharacterSet
 )
 
 var directionMap = map[rune]int{
@@ -147,9 +147,17 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		case '[':
 			ei.state = stateCSI
 			return true, nil
+		case '(':
+			ei.state = stateCharacterSet
+			return true, nil
 		default:
 			return false, errNotCSI
 		}
+	case stateCharacterSet:
+		// doing nothing for now.
+		// see 'ESC ( C ' in https://invisible-island.net/xterm/ctlseqs/ctlseqs.html#h2-Functions-using-CSI-_-ordered-by-the-final-character_s_
+		ei.state = stateNone
+		return true, nil
 	case stateCSI:
 		switch {
 		case ch >= '0' && ch <= '9', ch == '?':
@@ -215,13 +223,9 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		case ch == 'J':
 			ei.instruction.kind = CLEAR_SCREEN
 
-			p, err := strconv.Atoi(ei.csiParam[0])
+			ei.instruction.param1, err = strconv.Atoi(ei.csiParam[0])
 			if err != nil {
 				return false, errCSIParseError
-			}
-
-			if p != 2 {
-				panic(fmt.Sprintf("clear screen param not yet supported: %d", p))
 			}
 
 			ei.state = stateNone
@@ -251,6 +255,12 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 				// it's trying to set bracketed paste mode. Not sure what to do here
 			case "?1049":
 				// switch to alternate screen. unimplemented
+			case "?1":
+				// setting cursor key to application. unimplemented
+			case "?12":
+				// see https://www.inwap.com/pdp10/ansicode.txt
+				// [12h = SRM - Send Receive Mode, transmit without local echo
+				// unimplemented
 			default:
 				return false, errCSIParseError
 			}
@@ -259,9 +269,21 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			return true, nil
 
 		case ch == 'l':
-			if ei.csiParam[0] == "?25" {
-				// wants us to hide the cursor but we don't care
-			} else {
+			// see https://vt100.net/docs/vt100-ug/chapter3.html
+			switch ei.csiParam[0] {
+			case "?25":
+				// wants us to show the cursor but we never hide it in the first place
+			case "?2004":
+				// it's trying to set bracketed paste mode. Not sure what to do here
+			case "?1049":
+				// switch to alternate screen. unimplemented
+			case "?1":
+				// setting cursor key to application. unimplemented
+			case "?12":
+				// see https://www.inwap.com/pdp10/ansicode.txt
+				// [12h = SRM - Send Receive Mode, transmit without local echo
+				// unimplemented
+			default:
 				return false, errCSIParseError
 			}
 			ei.state = stateNone
