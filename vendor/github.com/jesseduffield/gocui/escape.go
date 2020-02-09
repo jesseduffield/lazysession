@@ -299,25 +299,25 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			return true, nil
 
 		case ch == 'H':
-			p := 0
+			y := 0
 			if len(ei.csiParam) > 0 {
-				p, err = strconv.Atoi(ei.csiParam[0])
+				y, err = strconv.Atoi(ei.csiParam[0])
 				if err != nil {
 					return false, errCSIParseError
 				}
 			}
 
-			p2 := 0
+			x := 0
 			if len(ei.csiParam) > 1 {
-				p2, err = strconv.Atoi(ei.csiParam[1])
+				x, err = strconv.Atoi(ei.csiParam[1])
 				if err != nil {
 					return false, errCSIParseError
 				}
 			}
 
 			ei.instruction.kind = CURSOR_MOVE
-			ei.instruction.param1 = p
-			ei.instruction.param1 = p2
+			ei.instruction.param1 = y
+			ei.instruction.param2 = x
 
 			ei.state = stateNone
 			ei.csiParam = nil

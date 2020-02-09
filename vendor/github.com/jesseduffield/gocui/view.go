@@ -394,8 +394,8 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.moveCursorRight(toMoveRight)
 					sanityCheck()
 				case CURSOR_MOVE:
-					x := v.ei.instruction.param1
-					y := v.ei.instruction.param2
+					y := v.ei.instruction.param1
+					x := v.ei.instruction.param2
 					v.moveCursorToPosition(x, y)
 					sanityCheck()
 				case ERASE_IN_LINE:

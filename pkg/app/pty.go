@@ -58,10 +58,10 @@ func (app *App) runCommandInPty(view *gocui.View) error {
 	signal.Notify(ch, syscall.SIGWINCH)
 	go func() {
 		for range ch {
-			_, height := view.Size()
+			width, height := view.Size()
 			// if we give the view's height the program kind of tries to wrap for us
 			// but doesn't do a very good job.
-			pty.Setsize(ptmx, &pty.Winsize{Cols: 10000, Rows: uint16(height)})
+			pty.Setsize(ptmx, &pty.Winsize{Cols: uint16(width), Rows: uint16(height)})
 		}
 	}()
 	ch <- syscall.SIGWINCH // Initial resize.
