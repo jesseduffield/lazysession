@@ -2,7 +2,6 @@ package app
 
 import (
 	"log"
-	"math"
 	"time"
 
 	"github.com/jesseduffield/gocui"
@@ -77,26 +76,29 @@ func (app *App) scrollMainUp(g *gocui.Gui, v *gocui.View) error {
 
 func (app *App) scrollUpView(viewName string) error {
 	mainView, _ := app.g.View(viewName)
+	mainView.Autoscroll = false
 	ox, oy := mainView.Origin()
 	scrollHeight := 1
-	newOy := int(math.Max(0, float64(oy-scrollHeight)))
+	newOy := oy - scrollHeight
+	if newOy <= 0 {
+		newOy = 0
+	}
 	return mainView.SetOrigin(ox, newOy)
 }
 
 func (app *App) scrollDownView(viewName string) error {
 	mainView, _ := app.g.View(viewName)
+	mainView.Autoscroll = false
 	ox, oy := mainView.Origin()
-	y := oy
-	scrollPastBottom := true
-	if !scrollPastBottom {
-		_, sy := mainView.Size()
-		y += sy
-	}
+	_, sy := mainView.Size()
+	y := oy + sy
 	scrollHeight := 1
-	if y < mainView.LinesHeight() {
+	if y < mainView.LinesHeight()-1 {
 		if err := mainView.SetOrigin(ox, oy+scrollHeight); err != nil {
 			return err
 		}
+	} else {
+		mainView.Autoscroll = true
 	}
 
 	return nil
