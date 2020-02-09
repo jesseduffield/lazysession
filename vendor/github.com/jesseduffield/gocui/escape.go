@@ -58,8 +58,8 @@ const (
 var directionMap = map[rune]int{
 	'A': CURSOR_UP,
 	'B': CURSOR_DOWN,
-	'C': CURSOR_LEFT,
-	'D': CURSOR_RIGHT,
+	'C': CURSOR_RIGHT,
+	'D': CURSOR_LEFT,
 }
 
 var (
@@ -150,15 +150,11 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		return false, errNotCSI
 	case stateCSI:
 		switch {
-		case ch >= '0' && ch <= '9':
+		case ch >= '0' && ch <= '9', ch == '?':
 			ei.csiParam = append(ei.csiParam, "")
-		case ch == 'm':
-			ei.csiParam = append(ei.csiParam, "0")
-		case ch == 'K':
-			ei.csiParam = append(ei.csiParam, "0")
-		case ch == '?':
-			ei.csiParam = append(ei.csiParam, "")
-		case ch == 'H':
+		case ch == 'A', ch == 'B', ch == 'C', ch == 'D':
+			ei.csiParam = append(ei.csiParam, "1")
+		case ch == 'H', ch == 'm', ch == 'K':
 			ei.csiParam = append(ei.csiParam, "0")
 		default:
 			return false, errCSIParseError
@@ -196,6 +192,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			if err != nil {
 				return false, errCSIParseError
 			}
+
 			ei.instruction.kind = directionMap[ch]
 			ei.instruction.param1 = p
 

@@ -14,7 +14,7 @@ func (app *App) layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Frame = false
-		v.Wrap = false
+		v.Wrap = true
 		v.Autoscroll = true
 		app.views.main = v
 

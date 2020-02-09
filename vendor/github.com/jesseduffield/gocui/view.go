@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/go-errors/errors"
 
 	"github.com/jesseduffield/termbox-go"
@@ -215,12 +216,10 @@ func (v *View) setRune(x, y int, ch rune, fgColor, bgColor Attribute) error {
 // SetCursor sets the cursor position of the view at the given point,
 // relative to the view. It checks if the position is valid.
 func (v *View) SetCursor(x, y int) error {
-	maxX, maxY := v.Size()
-	if x < 0 || x >= maxX || y < 0 || y >= maxY {
+	if x < 0 || y < 0 {
 		return nil
 	}
 	v.cx = x
-	v.log.Warn("setting cy to: ", y)
 	v.cy = y
 	return nil
 }
@@ -344,32 +343,22 @@ func (v *View) Write(p []byte) (n int, err error) {
 				case CURSOR_UP:
 					v.log.Warn("moving cursor up")
 					toMoveUp := v.ei.instruction.param1
-					if toMoveUp == 0 {
-						toMoveUp = 1
-					}
 					v.moveCursorUp(toMoveUp)
 					sanityCheck()
 				case CURSOR_DOWN:
 					v.log.Warn("moving cursor up")
 					toMoveDown := v.ei.instruction.param1
-					if toMoveDown == 0 {
-						toMoveDown = 1
-					}
 					v.moveCursorDown(toMoveDown)
 					sanityCheck()
 
 				case CURSOR_LEFT:
 					toMoveLeft := v.ei.instruction.param1
-					if toMoveLeft == 0 {
-						toMoveLeft = 1
-					}
+					v.log.Warn("moving cursor left: ", toMoveLeft)
 					v.moveCursorLeft(toMoveLeft)
 					sanityCheck()
 				case CURSOR_RIGHT:
+					v.log.Warn("moving cursor right")
 					toMoveRight := v.ei.instruction.param1
-					if toMoveRight == 0 {
-						toMoveRight = 1
-					}
 					v.moveCursorRight(toMoveRight)
 					sanityCheck()
 				case CURSOR_MOVE:
@@ -473,7 +462,8 @@ func (v *View) parseInput(ch rune) []cell {
 	isEscape, err := v.ei.parseOne(ch)
 	if err != nil {
 		// there is an error parsing an escape sequence, ouput all the escape characters so far as a string
-		// panic(string(v.ei.runes()[1:]))
+		v.log.Warn(spew.Sdump(v.ei.runes()[1:]))
+		panic(string(v.ei.runes()[1:]))
 		for _, r := range v.ei.runes() {
 			c := cell{
 				fgColor: v.FgColor,
@@ -527,16 +517,21 @@ func (v *View) Rewind() {
 	v.readOffset = 0
 }
 
-// draw re-draws the view's contents.
-func (v *View) draw() error {
+// draw re-draws the view's contents. It returns an array of wrap counts, that is,
+// when wrapping is turned on, an array where for each index and value i, v,
+// i is the position of a line in the buffer, and v is the number times the line wrapped
+func (v *View) draw() ([]int, error) {
 	maxX, maxY := v.Size()
 
 	if v.Wrap {
 		if maxX == 0 {
-			return errors.New("X size of the view cannot be 0")
+			return nil, errors.New("X size of the view cannot be 0")
 		}
 		v.ox = 0
 	}
+
+	wrapCounts := make([]int, len(v.lines))
+
 	if v.tainted {
 		v.viewLines = nil
 		lines := v.lines
@@ -550,6 +545,7 @@ func (v *View) draw() error {
 			}
 
 			ls := lineWrap(line, wrap)
+			wrapCounts[i] = len(ls) - 1
 			for j := range ls {
 				vline := viewLine{linesX: j, linesY: i, line: ls[j]}
 				v.viewLines = append(v.viewLines, vline)
@@ -589,13 +585,13 @@ func (v *View) draw() error {
 				bgColor = v.BgColor
 			}
 			if err := v.setRune(x, y, c.chr, fgColor, bgColor); err != nil {
-				return err
+				return nil, err
 			}
 			x += runewidth.RuneWidth(c.chr)
 		}
 		y++
 	}
-	return nil
+	return wrapCounts, nil
 }
 
 // realPosition returns the position in the internal buffer corresponding to the

@@ -727,14 +727,30 @@ func (g *Gui) drawSubtitle(v *View, fgColor, bgColor Attribute) error {
 // draw manages the cursor and calls the draw function of a view.
 func (g *Gui) draw(v *View) error {
 	v.clearRunes()
-	if err := v.draw(); err != nil {
+	wrapCounts, err := v.draw()
+	if err != nil {
 		return err
 	}
+
 	if g.Cursor {
-		if curview := g.currentView; curview != nil {
+		if curview := g.currentView; curview != nil && curview == v {
 			gMaxX, gMaxY := g.Size()
+			vMaxX, _ := curview.Size()
 			ox, oy := curview.Origin()
-			cx, cy := curview.x0+curview.cx+1-ox, curview.y0+curview.cy+1-oy
+			// for every time there was a wrap we need to move the cursor down one line
+			wrapHeight := 0
+			if len(wrapCounts) > 0 {
+				for _, wrapCount := range wrapCounts[0:curview.cy] {
+					wrapHeight += wrapCount
+				}
+			}
+			if len(curview.lines) > 0 {
+				wrapHeight += curview.cx / vMaxX
+			}
+
+			wrappedCx := curview.cx % vMaxX
+
+			cx, cy := curview.x0+wrappedCx+1-ox, curview.y0+curview.cy+wrapHeight+1-oy
 			if cx >= 0 && cx < gMaxX && cy >= 0 && cy < gMaxY {
 				termbox.SetCursor(cx, cy)
 			} else {
@@ -764,7 +780,7 @@ func (g *Gui) onKey(ev *termbox.Event) error {
 		if g.currentView != nil {
 			// if we have a current view, and it's a pty view, get the event's bytes and write them to the input buffer
 			if g.currentView.Pty {
-				g.log.Warn(spew.Sdump(ev.Bytes))
+				g.log.Warn("input bytes: ", spew.Sdump(ev.Bytes))
 				g.currentView.StdinWriter.Write(ev.Bytes)
 			}
 
