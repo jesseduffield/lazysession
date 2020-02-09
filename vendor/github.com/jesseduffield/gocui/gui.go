@@ -748,7 +748,7 @@ func (g *Gui) draw(v *View) error {
 				wrapHeight += curview.cx / vMaxX
 			}
 
-			wrappedCx := curview.cx % vMaxX
+			wrappedCx := curview.cx % (vMaxX + 1)
 
 			cx, cy := curview.x0+wrappedCx+1-ox, curview.y0+curview.cy+wrapHeight+1-oy
 			if cx >= 0 && cx < gMaxX && cy >= 0 && cy < gMaxY {

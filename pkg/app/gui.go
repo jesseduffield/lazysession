@@ -18,7 +18,8 @@ func (app *App) layout(g *gocui.Gui) error {
 		// if we turn on wrap then to get rails c to work we need to act like we have
 		// a really wide window.
 		// for vim you need to be honest about the width, and set wrap to false
-		v.Wrap = false
+		// for rails c to work with wrap false, you need a carriage return to create a new line
+		v.Wrap = true
 		v.Autoscroll = true
 		app.views.main = v
 

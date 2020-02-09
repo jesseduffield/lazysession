@@ -362,10 +362,10 @@ func (v *View) Write(p []byte) (n int, err error) {
 			sanityCheck()
 		case '\r':
 			v.log.Warn("carriage return")
+			// I'm just ignoring carriage returns unconditionally
 			if v.IgnoreCarriageReturns {
 				continue
 			}
-			v.cx = 0
 			sanityCheck()
 		default:
 
@@ -378,7 +378,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.moveCursorUp(toMoveUp)
 					sanityCheck()
 				case CURSOR_DOWN:
-					v.log.Warn("moving cursor up")
+					v.log.Warn("moving cursor down")
 					toMoveDown := v.ei.instruction.param1
 					v.moveCursorDown(toMoveDown)
 					sanityCheck()
@@ -576,7 +576,8 @@ func (v *View) draw() ([]int, error) {
 		for i, line := range lines {
 			wrap := 0
 			if v.Wrap {
-				wrap = maxX
+				// TODO: see if we should consider v.Frame here
+				wrap = maxX + 1
 			}
 
 			ls := lineWrap(line, wrap)
