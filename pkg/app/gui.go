@@ -1,7 +1,6 @@
 package app
 
 import (
-	"log"
 	"time"
 
 	"github.com/jesseduffield/gocui"
@@ -9,7 +8,7 @@ import (
 
 func (app *App) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", 0, 0, maxX-1, maxY-1, 0); err != nil {
+	if v, err := g.SetView("main", 0, 0, maxX-1, maxY-4, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -20,6 +19,17 @@ func (app *App) layout(g *gocui.Gui) error {
 
 		app.g.SetCurrentView("main")
 		go app.onFirstRender()
+	}
+
+	if v, err := g.SetView("buffer", 0, maxY-3, maxX-1, maxY-1, 0); err != nil {
+		if err.Error() != "unknown view" {
+			return err
+		}
+		v.Frame = true
+		v.Wrap = true
+		v.Autoscroll = true
+		v.Editable = true
+		app.views.buffer = v
 	}
 
 	return nil
@@ -51,19 +61,45 @@ func (app *App) update(f func() error) {
 	})
 }
 
-func (app *App) setKeybindings() {
+func (app *App) setKeybindings() error {
 	quitKeys := []interface{}{gocui.KeyEsc, 'q', gocui.KeyCtrlC}
 	for _, key := range quitKeys {
 		if err := app.g.SetKeybinding("", nil, key, gocui.ModNone, quit); err != nil {
-			log.Panicln(err)
+			return err
 		}
 	}
 	if err := app.g.SetKeybinding("main", nil, gocui.MouseWheelDown, gocui.ModNone, app.scrollMainDown); err != nil {
-		log.Panicln(err)
+		return err
 	}
 	if err := app.g.SetKeybinding("main", nil, gocui.MouseWheelUp, gocui.ModNone, app.scrollMainUp); err != nil {
-		log.Panicln(err)
+		return err
 	}
+	if err := app.g.SetKeybinding("main", nil, gocui.KeyTab, gocui.ModNone, app.switchView); err != nil {
+		return err
+	}
+	if err := app.g.SetKeybinding("", nil, gocui.KeyTab, gocui.ModNone, app.switchView); err != nil {
+		return err
+	}
+	if err := app.g.SetKeybinding("buffer", nil, gocui.KeyEnter, gocui.ModNone, app.flushBuffer); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (app *App) switchView(g *gocui.Gui, v *gocui.View) error {
+	if app.g.CurrentView() == app.views.main {
+		_, err := app.g.SetCurrentView("buffer")
+		return err
+	}
+	_, err := app.g.SetCurrentView("main")
+	return err
+}
+
+func (app *App) flushBuffer(g *gocui.Gui, v *gocui.View) error {
+	buffer := app.views.buffer.Buffer()
+	app.views.buffer.Clear()
+	app.views.main.StdinWriter.Write([]byte(buffer + "\r"))
+	return nil
 }
 
 func (app *App) scrollMainDown(g *gocui.Gui, v *gocui.View) error {

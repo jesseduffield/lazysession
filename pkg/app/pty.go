@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
@@ -9,7 +10,9 @@ import (
 	"unicode/utf8"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/fatih/color"
 	"github.com/jesseduffield/gocui"
+	"github.com/jesseduffield/lazysession/pkg/utils"
 	"github.com/jesseduffield/pty"
 	"github.com/sirupsen/logrus"
 )
@@ -64,6 +67,8 @@ func (app *App) runCommandInPty(view *gocui.View) error {
 	view.StdinWriter = ptmx
 
 	_, _ = io.Copy(view, ptmx)
+
+	fmt.Fprintf(view, "\n\n"+utils.ColoredString("command has exited, press 'q' to quit", color.FgGreen))
 
 	view.Pty = false
 

@@ -105,8 +105,12 @@ func (app *App) Run() error {
 	app.g = g
 	app.g.Cursor = true
 	app.g.Mouse = true
+	app.g.SelFgColor = gocui.ColorGreen
+	app.g.SelBgColor = gocui.ColorGreen
 	app.g.SetManagerFunc(app.layout)
-	app.setKeybindings()
+	if err := app.setKeybindings(); err != nil {
+		return err
+	}
 
 	if err := app.g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		return err
