@@ -362,10 +362,10 @@ func (v *View) Write(p []byte) (n int, err error) {
 			sanityCheck()
 		case '\r':
 			v.log.Warn("carriage return")
-			// I'm just ignoring carriage returns unconditionally
 			if v.IgnoreCarriageReturns {
 				continue
 			}
+			v.cx = 0
 			sanityCheck()
 		default:
 
