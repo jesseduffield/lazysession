@@ -9,11 +9,11 @@ import (
 
 func (app *App) layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", 0, 0, maxX-1, maxY-4, 0); err != nil {
+	if v, err := g.SetView("main", -1, -1, maxX, maxY-3, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
-		v.Frame = true
+		v.Frame = false
 		v.Wrap = false
 		v.Autoscroll = true
 		app.views.main = v
