@@ -160,7 +160,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		return true, nil
 	case stateCSI:
 		switch {
-		case ch >= '0' && ch <= '9', ch == '?':
+		case ch >= '0' && ch <= '9', ch == '?', ch == '>':
 			ei.csiParam = append(ei.csiParam, "")
 		case ch == 'A', ch == 'B', ch == 'C', ch == 'D':
 			ei.csiParam = append(ei.csiParam, "1")
@@ -183,7 +183,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		fallthrough
 	case stateParams:
 		switch {
-		case ch >= '0' && ch <= '9', ch == '?':
+		case ch >= '0' && ch <= '9', ch == '?', ch == '>':
 			ei.csiParam[len(ei.csiParam)-1] += string(ch)
 			return true, nil
 
@@ -290,6 +290,14 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.csiParam = nil
 			return true, nil
 
+		case ch == 'c':
+			if ei.csiParam[0] != ">" {
+				return false, errCSIParseError
+			}
+			// I don't think we need to care about this. See https://stackoverflow.com/questions/29939026/what-is-the-ansi-escape-code-sequence-escc
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
 		case ch == '@':
 			p, err := strconv.Atoi(ei.csiParam[0])
 			if err != nil {
