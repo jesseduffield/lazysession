@@ -33,7 +33,9 @@ type App struct {
 
 // State holds the app's state
 type State struct {
-	FavDirs []string `json:"favDirs"`
+	History      []string `json:"history"`
+	historyIndex int
+	currentLine  string
 }
 
 // Views stores our views

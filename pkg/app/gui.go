@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/jesseduffield/gocui"
@@ -83,6 +84,12 @@ func (app *App) setKeybindings() error {
 	if err := app.g.SetKeybinding("buffer", nil, gocui.KeyEnter, gocui.ModNone, app.flushBuffer); err != nil {
 		return err
 	}
+	if err := app.g.SetKeybinding("buffer", nil, gocui.KeyArrowUp, gocui.ModNone, app.prevHistoryItem); err != nil {
+		return err
+	}
+	if err := app.g.SetKeybinding("buffer", nil, gocui.KeyArrowDown, gocui.ModNone, app.nextHistoryItem); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -98,7 +105,35 @@ func (app *App) switchView(g *gocui.Gui, v *gocui.View) error {
 func (app *App) flushBuffer(g *gocui.Gui, v *gocui.View) error {
 	buffer := app.views.buffer.Buffer()
 	app.views.buffer.Clear()
+	app.state.History = append(app.state.History, buffer)
+	app.state.historyIndex = -1
 	app.views.main.StdinWriter.Write([]byte(buffer + "\r"))
+	return nil
+}
+
+func (app *App) nextHistoryItem(g *gocui.Gui, v *gocui.View) error {
+	if app.state.historyIndex == -1 {
+		return nil
+	}
+	app.views.buffer.Clear()
+	if app.state.historyIndex < len(app.state.History)-1 {
+		app.state.historyIndex++
+		fmt.Fprint(app.views.buffer, app.state.History[app.state.historyIndex])
+	} else {
+		fmt.Fprint(app.views.buffer, app.state.currentLine)
+	}
+	return nil
+}
+
+func (app *App) prevHistoryItem(g *gocui.Gui, v *gocui.View) error {
+	if app.state.historyIndex == -1 {
+		app.state.currentLine = app.views.buffer.Buffer()
+		app.state.historyIndex = len(app.state.History) - 1
+	} else if app.state.historyIndex > 0 {
+		app.state.historyIndex--
+	}
+	app.views.buffer.Clear()
+	fmt.Fprint(app.views.buffer, app.state.History[app.state.historyIndex])
 	return nil
 }
 
