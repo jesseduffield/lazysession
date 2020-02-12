@@ -30,11 +30,12 @@ func (app *App) layout(g *gocui.Gui) error {
 		// for vim you need to be honest about the width, and set wrap to false
 		// for rails c to work with wrap false, you need a carriage return to create a new line
 		v.Wrap = true
+		// autoscroll is best turned off when you're in a full-window application like vim or lazygit. It would be good to make this adjustable while in the app.
+		// TODO: take escape codes like [?1049 to say we're turning off wrap and autoscroll.
 		v.Autoscroll = true
 		app.views.main = v
 
 		app.g.SetCurrentView("main")
-
 	}
 
 	if v, err := g.SetView("buffer", 0, height-4, width-1, height-2, 0); err != nil {

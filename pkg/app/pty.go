@@ -57,7 +57,8 @@ func (app *App) runCommandInPty(view *gocui.View) error {
 
 	_, _ = io.Copy(view, ptmx)
 
-	fmt.Fprintf(view, "\n\n"+utils.ColoredString("command has exited, press 'q' to quit", color.FgGreen))
+	app.views.info.Clear()
+	fmt.Fprintf(app.views.info, utils.ColoredString("command has exited, press 'q' to quit", color.FgGreen))
 
 	view.Pty = false
 

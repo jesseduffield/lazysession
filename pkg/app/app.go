@@ -107,7 +107,8 @@ func (app *App) Run() error {
 
 	app.cmd = cmd
 
-	g, err := gocui.NewGui(gocui.OutputNormal, false, app.Log)
+	// might want to make this depent on the TERM env var
+	g, err := gocui.NewGui(gocui.Output256, false, app.Log)
 	if err != nil {
 		return err
 	}

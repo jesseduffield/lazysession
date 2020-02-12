@@ -40,6 +40,8 @@ const (
 	SAVE_CURSOR_POSITION
 	RESTORE_CURSOR_POSITION
 	WRITE
+	SWITCH_TO_ALTERNATE_SCREEN
+	SWITCH_BACK_FROM_ALTERNATE_SCREEN
 )
 
 type instruction struct {
@@ -285,26 +287,26 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		case ch == 'h':
 			// see https://vt100.net/docs/vt100-ug/chapter3.html
 			switch ei.csiParam[0] {
-			case "?25":
-				// wants us to show the cursor but we never hide it in the first place
-			case "?2004":
-				// it's trying to set bracketed paste mode. Not sure what to do here
+			// case "?25":
+			// 	// wants us to show the cursor but we never hide it in the first place
+			// case "?2004":
+			// 	// it's trying to set bracketed paste mode. Not sure what to do here
 			case "?1049":
-				// switch to alternate screen. unimplemented
-			case "?1":
-				// setting cursor key to application. unimplemented
-			case "?12":
-				// see https://www.inwap.com/pdp10/ansicode.txt
-				// [12h = SRM - Send Receive Mode, transmit without local echo
-				// unimplemented
-			case "?1000":
-				// unimplemented
-			case "?1015":
-				// unimplemented
-			case "?1006":
-				// unimplemented
-			case "?1002":
-				// unimplemented
+				ei.instruction.kind = SWITCH_TO_ALTERNATE_SCREEN
+			// case "?1":
+			// 	// setting cursor key to application. unimplemented
+			// case "?12":
+			// 	// see https://www.inwap.com/pdp10/ansicode.txt
+			// 	// [12h = SRM - Send Receive Mode, transmit without local echo
+			// 	// unimplemented
+			// case "?1000":
+			// 	// unimplemented
+			// case "?1015":
+			// 	// unimplemented
+			// case "?1006":
+			// 	// unimplemented
+			// case "?1002":
+			// 	// unimplemented
 			default:
 				return false, errCSIParseError
 			}
@@ -315,26 +317,27 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		case ch == 'l':
 			// see https://vt100.net/docs/vt100-ug/chapter3.html
 			switch ei.csiParam[0] {
-			case "?25":
-				// wants us to show the cursor but we never hide it in the first place
-			case "?2004":
-				// it's trying to set bracketed paste mode. Not sure what to do here
+			// case "?25":
+			// 	// wants us to show the cursor but we never hide it in the first place
+			// case "?2004":
+			// 	// it's trying to set bracketed paste mode. Not sure what to do here
 			case "?1049":
+				ei.instruction.kind = SWITCH_TO_ALTERNATE_SCREEN
 				// switch to alternate screen. unimplemented
-			case "?1":
-				// setting cursor key to application. unimplemented
-			case "?12":
-				// see https://www.inwap.com/pdp10/ansicode.txt
-				// [12h = SRM - Send Receive Mode, transmit without local echo
-				// unimplemented
-			case "?1000":
-				// unimplemented
-			case "?1015":
-				// unimplemented
-			case "?1006":
-				// unimplemented
-			case "?1002":
-				// unimplemented
+			// case "?1":
+			// 	// setting cursor key to application. unimplemented
+			// case "?12":
+			// 	// see https://www.inwap.com/pdp10/ansicode.txt
+			// 	// [12h = SRM - Send Receive Mode, transmit without local echo
+			// 	// unimplemented
+			// case "?1000":
+			// 	// unimplemented
+			// case "?1015":
+			// 	// unimplemented
+			// case "?1006":
+			// 	// unimplemented
+			// case "?1002":
+			// 	// unimplemented
 			default:
 				return false, errCSIParseError
 			}
@@ -451,9 +454,6 @@ func (ei *escapeInterpreter) outputNormal() error {
 //   0x11 - 0xe8: 216 different colors
 //   0xe9 - 0x1ff: 24 different shades of grey
 func (ei *escapeInterpreter) output256() error {
-	ei.mutex.Lock()
-	defer ei.mutex.Unlock()
-
 	if len(ei.csiParam) < 3 {
 		return ei.outputNormal()
 	}

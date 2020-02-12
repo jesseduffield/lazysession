@@ -12,7 +12,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-errors/errors"
 
 	"github.com/jesseduffield/termbox-go"
@@ -125,8 +124,11 @@ type View struct {
 
 	// these are for when the terminal wants to save the cursor position to restore
 	// it later
-	savedCx int
-	savedCy int
+	savedCx    int
+	savedCy    int
+	savedLines [][]cell // TODO: see if we need a separate savedCx and savedCy for dealing with code 1049
+	savedOx    int
+	savedOy    int
 }
 
 type viewLine struct {
@@ -338,10 +340,14 @@ func (v *View) Write(p []byte) (n int, err error) {
 	defer v.writeMutex.Unlock()
 
 	if len(v.lines) == 0 {
-		v.lines = make([][]cell, 1) // not sure why we're doing that
+		v.lines = [][]cell{[]cell{cell{}}}
 	}
 
 	sanityCheck := func() {
+		if v.lines == nil {
+			v.log.Warn("FAILED! v.lines == nil")
+			panic("v.lines == nil")
+		}
 		if v.cx > len(v.lines[v.cy]) {
 			v.log.Warn("FAILED! y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
 			panic("cx too big")
@@ -349,7 +355,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 	}
 
 	runes := bytes.Runes(p)
-	v.log.Warn(quoteRunes(runes))
+	// v.log.Warn(quoteRunes(runes))
 	for _, ch := range runes {
 		switch ch {
 		case '\n':
@@ -481,6 +487,31 @@ func (v *View) Write(p []byte) (n int, err error) {
 				case WRITE:
 					v.log.Warn("writing")
 					v.StdinWriter.Write([]byte(string(v.ei.instruction.toWrite)))
+				case SWITCH_TO_ALTERNATE_SCREEN:
+					v.log.Warn("switching to alternate screen")
+					v.savedLines = v.lines
+					v.lines = [][]cell{[]cell{cell{}}}
+					v.savedCx = v.cx
+					v.savedCy = v.cy
+					v.savedOx = v.ox
+					v.savedOy = v.oy
+					v.cy = 0
+					v.cx = 0
+					v.oy = 0
+					v.ox = 0
+					v.Autoscroll = false
+					v.Wrap = false
+					sanityCheck()
+				case SWITCH_BACK_FROM_ALTERNATE_SCREEN:
+					panic("switching back")
+					v.log.Warn("switching back from alternate screen")
+					v.lines = v.savedLines
+					v.cy = v.savedCx
+					v.cx = v.savedCy
+					v.ox = v.savedOx
+					v.oy = v.savedOy
+					v.Autoscroll = true
+					v.Wrap = true
 				default:
 					panic("instruction not understood")
 				}
@@ -531,7 +562,7 @@ func (v *View) parseInput(ch rune) []cell {
 	isEscape, err := v.ei.parseOne(ch)
 	if err != nil {
 		// there is an error parsing an escape sequence, ouput all the escape characters so far as a string
-		v.log.Warn(spew.Sdump(v.ei.runes()[1:]))
+		v.log.Warn(string(v.ei.runes()[1:]))
 		for _, r := range v.ei.runes() {
 			c := cell{
 				fgColor: v.FgColor,
