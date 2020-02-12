@@ -589,6 +589,9 @@ func (v *View) Rewind() {
 // when wrapping is turned on, an array where for each index and value i, v,
 // i is the position of a line in the buffer, and v is the number times the line wrapped
 func (v *View) draw() ([]int, error) {
+	v.writeMutex.Lock()
+	defer v.writeMutex.Unlock()
+
 	maxX, maxY := v.Size()
 
 	if v.Wrap {
