@@ -297,6 +297,14 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 				// see https://www.inwap.com/pdp10/ansicode.txt
 				// [12h = SRM - Send Receive Mode, transmit without local echo
 				// unimplemented
+			case "?1000":
+				// unimplemented
+			case "?1015":
+				// unimplemented
+			case "?1006":
+				// unimplemented
+			case "?1002":
+				// unimplemented
 			default:
 				return false, errCSIParseError
 			}
@@ -318,6 +326,14 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			case "?12":
 				// see https://www.inwap.com/pdp10/ansicode.txt
 				// [12h = SRM - Send Receive Mode, transmit without local echo
+				// unimplemented
+			case "?1000":
+				// unimplemented
+			case "?1015":
+				// unimplemented
+			case "?1006":
+				// unimplemented
+			case "?1002":
 				// unimplemented
 			default:
 				return false, errCSIParseError

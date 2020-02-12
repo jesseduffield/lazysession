@@ -3,10 +3,7 @@ package app
 import (
 	"fmt"
 	"io"
-	"os"
-	"os/signal"
 	"strconv"
-	"syscall"
 	"unicode/utf8"
 
 	"github.com/davecgh/go-spew/spew"
@@ -53,18 +50,8 @@ func (app *App) runCommandInPty(view *gocui.View) error {
 	// Make sure to close the pty at the end.
 	defer func() { _ = ptmx.Close() }() // Best effort.
 
-	// Handle pty size.
-	ch := make(chan os.Signal, 1)
-	signal.Notify(ch, syscall.SIGWINCH)
-	go func() {
-		for range ch {
-			width, height := view.Size()
-			// if we give the view's height the program kind of tries to wrap for us
-			// but doesn't do a very good job.
-			pty.Setsize(ptmx, &pty.Winsize{Cols: uint16(width), Rows: uint16(height)})
-		}
-	}()
-	ch <- syscall.SIGWINCH // Initial resize.
+	app.ptmx = ptmx
+	app.onResize()
 
 	view.StdinWriter = ptmx
 

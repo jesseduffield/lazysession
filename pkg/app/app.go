@@ -29,6 +29,11 @@ type App struct {
 	Log    *logrus.Entry
 	Tr     i18n.TranslationSet
 	cmd    *exec.Cmd
+
+	prevWidth  int
+	prevHeight int
+	ptmx       *os.File
+	started    bool
 }
 
 // State holds the app's state

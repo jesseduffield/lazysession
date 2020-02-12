@@ -5,11 +5,21 @@ import (
 	"time"
 
 	"github.com/jesseduffield/gocui"
+	"github.com/jesseduffield/pty"
 )
 
+func (app *App) onResize() error {
+	if app.ptmx == nil {
+		return nil
+	}
+	width, height := app.views.main.Size()
+	return pty.Setsize(app.ptmx, &pty.Winsize{Cols: uint16(width), Rows: uint16(height)})
+}
+
 func (app *App) layout(g *gocui.Gui) error {
-	maxX, maxY := g.Size()
-	if v, err := g.SetView("main", -1, -1, maxX, maxY-4, 0); err != nil {
+	width, height := g.Size()
+
+	if v, err := g.SetView("main", -1, -1, width, height-4, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -24,10 +34,10 @@ func (app *App) layout(g *gocui.Gui) error {
 		app.views.main = v
 
 		app.g.SetCurrentView("main")
-		go app.onFirstRender()
+
 	}
 
-	if v, err := g.SetView("buffer", 0, maxY-4, maxX-1, maxY-2, 0); err != nil {
+	if v, err := g.SetView("buffer", 0, height-4, width-1, height-2, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -38,13 +48,26 @@ func (app *App) layout(g *gocui.Gui) error {
 		app.views.buffer = v
 	}
 
-	if v, err := g.SetView("info", -1, maxY-2, maxX-1, maxY, 0); err != nil {
+	if v, err := g.SetView("info", -1, height-2, width-1, height, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
 		v.Frame = false
 		app.views.info = v
 		fmt.Fprint(v, "use tab to switch from the program to the buffer")
+	}
+
+	if !app.started {
+		app.started = true
+		go app.onFirstRender()
+	}
+
+	if width != app.prevWidth || height != app.prevHeight {
+		app.prevWidth = width
+		app.prevHeight = height
+		if err := app.onResize(); err != nil {
+			return err
+		}
 	}
 
 	return nil

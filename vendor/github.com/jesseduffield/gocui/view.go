@@ -312,12 +312,12 @@ func (v *View) moveCursorUp(n int) {
 }
 
 func (v *View) moveCursorToPosition(x int, y int) {
-	v.log.Warn("x: ", x)
-	v.log.Warn("y: ", y)
+	// v.log.Warn("x: ", x)
+	// v.log.Warn("y: ", y)
 	v.moveCursorVertically(y - v.cy)
-	v.log.Warn("after moving vertically: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
+	// v.log.Warn("after moving vertically: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
 	v.moveCursorHorizontally(x - v.cx)
-	v.log.Warn("after moving horizontally: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
+	// v.log.Warn("after moving horizontally: y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]))
 }
 
 func quoteRunes(runes []rune) string {
@@ -492,7 +492,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 			}
 
 			for _, c := range cells {
-				v.log.Warn("y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]), ", cell ch: ", c.chr)
+				// v.log.Warn("y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]), ", cell ch: ", c.chr)
 
 				if c.chr == 7 {
 					// bell: can't do anything
