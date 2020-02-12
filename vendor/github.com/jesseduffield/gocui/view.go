@@ -478,6 +478,9 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.log.Warn("restoring cursor position")
 					v.moveCursorToPosition(v.savedCx, v.savedCy)
 					sanityCheck()
+				case WRITE:
+					v.log.Warn("writing")
+					v.StdinWriter.Write([]byte(string(v.ei.instruction.toWrite)))
 				default:
 					panic("instruction not understood")
 				}

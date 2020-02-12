@@ -17,7 +17,8 @@ require (
 	github.com/shibukawa/configdir v0.0.0-20170330084843-e180dbdc8da0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/stretchr/testify v1.4.0
-	golang.org/x/crypto v0.0.0-20190506204251-e1dfcc566284
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
+	golang.org/x/tools/gopls v0.3.1 // indirect
 	gopkg.in/yaml.v2 v2.2.8
 )

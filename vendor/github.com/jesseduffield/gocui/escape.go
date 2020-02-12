@@ -6,6 +6,7 @@ package gocui
 
 import (
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/go-errors/errors"
@@ -15,6 +16,7 @@ type escapeInterpreter struct {
 	state                  escapeState
 	curch                  rune
 	csiParam               []string
+	oscParam               []rune
 	curFgColor, curBgColor Attribute
 	mode                   OutputMode
 	mutex                  sync.Mutex
@@ -37,12 +39,14 @@ const (
 	DELETE
 	SAVE_CURSOR_POSITION
 	RESTORE_CURSOR_POSITION
+	WRITE
 )
 
 type instruction struct {
-	kind   int
-	param1 int
-	param2 int
+	kind    int
+	param1  int
+	param2  int
+	toWrite []rune
 }
 
 type escapeState int
@@ -53,6 +57,7 @@ const (
 	stateCSI
 	stateParams
 	stateCharacterSet
+	stateOSC
 )
 
 var directionMap = map[rune]int{
@@ -112,10 +117,27 @@ func (ei *escapeInterpreter) reset() {
 	ei.curFgColor = ColorDefault
 	ei.curBgColor = ColorDefault
 	ei.csiParam = nil
+	ei.oscParam = nil
 }
 
 func (ei *escapeInterpreter) instructionRead() {
 	ei.instruction.kind = NONE
+}
+
+func (ei *escapeInterpreter) parseOSCParams() {
+	str := string(ei.oscParam)
+	params := strings.Split(str, ";")
+	switch params[0] {
+	case "0", "2":
+		// ignoring attempts at setting the title
+		return
+	case "11":
+		ei.instruction.kind = WRITE
+		ei.instruction.toWrite = []rune{0x1b, ']', '1', '1', ';', 'r', 'g', 'b', ':', '0', '0', '/', '0', '0', '/', '0', '0', 0x1b, '\\'}
+	default:
+		panic(str)
+	}
+
 }
 
 // parseOne parses a rune. If isEscape is true, it means that the rune is part
@@ -147,11 +169,25 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		case '[':
 			ei.state = stateCSI
 			return true, nil
+		case ']':
+			ei.state = stateOSC
+			return true, nil
 		case '(':
 			ei.state = stateCharacterSet
 			return true, nil
 		default:
 			return false, errNotCSI
+		}
+	case stateOSC:
+		// either we have a bell in which case we parse what we've gotten so far
+		// or we append to our params
+		if ch == '\a' {
+			ei.parseOSCParams()
+			ei.state = stateNone
+			return true, nil
+		} else {
+			ei.oscParam = append(ei.oscParam, ch)
+			return true, nil
 		}
 	case stateCharacterSet:
 		// doing nothing for now.
