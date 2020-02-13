@@ -13,7 +13,7 @@ func (app *App) onResize() error {
 		return nil
 	}
 	width, height := app.views.main.Size()
-	return pty.Setsize(app.ptmx, &pty.Winsize{Cols: uint16(width), Rows: uint16(height)})
+	return pty.Setsize(app.ptmx, &pty.Winsize{Cols: uint16(width + 1), Rows: uint16(height)})
 }
 
 func (app *App) layout(g *gocui.Gui) error {

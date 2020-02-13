@@ -134,12 +134,12 @@ func (ei *escapeInterpreter) parseOSCParams() {
 		// ignoring attempts at setting the title
 		return
 	case "11":
-		ei.instruction.kind = WRITE
-		ei.instruction.toWrite = []rune{0x1b, ']', '1', '1', ';', 'r', 'g', 'b', ':', '0', '0', '/', '0', '0', '/', '0', '0', 0x1b, '\\'}
+		// ignoring for now
+		// ei.instruction.kind = WRITE
+		// ei.instruction.toWrite = []rune{0x1b, ']', '1', '1', ';', 'r', 'g', 'b', ':', '0', '0', '/', '0', '0', '/', '0', '0', 0x1b, '\\'}
 	default:
 		panic(str)
 	}
-
 }
 
 // parseOne parses a rune. If isEscape is true, it means that the rune is part
@@ -176,6 +176,16 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			return true, nil
 		case '(':
 			ei.state = stateCharacterSet
+			return true, nil
+		case '=':
+			// set Keypad Numeric Mode
+			// not implemented
+			ei.state = stateNone
+			return true, nil
+		case '>':
+			// set Keypad Application Mode
+			// not implemented
+			ei.state = stateNone
 			return true, nil
 		default:
 			return false, errNotCSI
@@ -308,6 +318,10 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			// case "?1002":
 			// 	// unimplemented
 			default:
+				ei.state = stateNone
+				ei.csiParam = nil
+				return true, nil
+
 				return false, errCSIParseError
 			}
 			ei.state = stateNone
@@ -339,6 +353,10 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			// case "?1002":
 			// 	// unimplemented
 			default:
+				ei.state = stateNone
+				ei.csiParam = nil
+				return true, nil
+
 				return false, errCSIParseError
 			}
 			ei.state = stateNone

@@ -379,13 +379,13 @@ func (v *View) Write(p []byte) (n int, err error) {
 			if v.ei.instruction.kind != NONE {
 				switch v.ei.instruction.kind {
 				case CURSOR_UP:
-					v.log.Warn("moving cursor up")
 					toMoveUp := v.ei.instruction.param1
+					v.log.Warn("moving cursor up by ", toMoveUp)
 					v.moveCursorUp(toMoveUp)
 					sanityCheck()
 				case CURSOR_DOWN:
-					v.log.Warn("moving cursor down")
 					toMoveDown := v.ei.instruction.param1
+					v.log.Warn("moving cursor down by ", toMoveDown)
 					v.moveCursorDown(toMoveDown)
 					sanityCheck()
 
@@ -395,8 +395,8 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.moveCursorLeft(toMoveLeft)
 					sanityCheck()
 				case CURSOR_RIGHT:
-					v.log.Warn("moving cursor right")
 					toMoveRight := v.ei.instruction.param1
+					v.log.Warn("moving cursor right by ", toMoveRight)
 					v.moveCursorRight(toMoveRight)
 					sanityCheck()
 				case CURSOR_MOVE:
@@ -456,6 +456,8 @@ func (v *View) Write(p []byte) (n int, err error) {
 						// TODO: apparently the cursor isn't actually supposed to move here. We'll need to pad this out.
 						v.cx = 0
 						v.cy = 0
+						v.ox = 0
+						v.oy = 0
 						sanityCheck()
 					}
 
@@ -547,6 +549,11 @@ func (v *View) Write(p []byte) (n int, err error) {
 				v.cx++
 			}
 			sanityCheck()
+
+			_, height := v.Size()
+			if v.cy >= height {
+				v.Autoscroll = true
+			}
 		}
 	}
 
