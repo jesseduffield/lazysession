@@ -95,7 +95,8 @@ func (app *App) onFirstRender() {
 	}
 }
 
-func quit(g *gocui.Gui, v *gocui.View) error {
+func (app *App) quit() error {
+	app.saveState()
 	return gocui.ErrQuit
 }
 
@@ -105,38 +106,7 @@ func (app *App) update(f func() error) {
 	})
 }
 
-func (app *App) setKeybindings() error {
-	quitKeys := []interface{}{gocui.KeyEsc, 'q', gocui.KeyCtrlC}
-	for _, key := range quitKeys {
-		if err := app.g.SetKeybinding("", nil, key, gocui.ModNone, quit); err != nil {
-			return err
-		}
-	}
-	if err := app.g.SetKeybinding("main", nil, gocui.MouseWheelDown, gocui.ModNone, app.scrollMainDown); err != nil {
-		return err
-	}
-	if err := app.g.SetKeybinding("main", nil, gocui.MouseWheelUp, gocui.ModNone, app.scrollMainUp); err != nil {
-		return err
-	}
-	if err := app.g.SetKeybinding("main", nil, gocui.KeyTab, gocui.ModNone, app.switchView); err != nil {
-		return err
-	}
-	if err := app.g.SetKeybinding("", nil, gocui.KeyTab, gocui.ModNone, app.switchView); err != nil {
-		return err
-	}
-	if err := app.g.SetKeybinding("buffer", nil, gocui.KeyEnter, gocui.ModNone, app.flushBuffer); err != nil {
-		return err
-	}
-	if err := app.g.SetKeybinding("buffer", nil, gocui.KeyArrowUp, gocui.ModNone, app.prevHistoryItem); err != nil {
-		return err
-	}
-	if err := app.g.SetKeybinding("buffer", nil, gocui.KeyArrowDown, gocui.ModNone, app.nextHistoryItem); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (app *App) switchView(g *gocui.Gui, v *gocui.View) error {
+func (app *App) switchView() error {
 	if app.g.CurrentView() == app.views.main {
 		_, err := app.g.SetCurrentView("buffer")
 		return err
@@ -145,7 +115,7 @@ func (app *App) switchView(g *gocui.Gui, v *gocui.View) error {
 	return err
 }
 
-func (app *App) flushBuffer(g *gocui.Gui, v *gocui.View) error {
+func (app *App) flushBuffer() error {
 	buffer := app.views.buffer.Buffer()
 	app.views.buffer.Clear()
 	app.state.History = append(app.state.History, buffer)
@@ -154,7 +124,7 @@ func (app *App) flushBuffer(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (app *App) nextHistoryItem(g *gocui.Gui, v *gocui.View) error {
+func (app *App) nextHistoryItem() error {
 	if app.state.historyIndex == -1 {
 		return nil
 	}
@@ -169,7 +139,7 @@ func (app *App) nextHistoryItem(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (app *App) prevHistoryItem(g *gocui.Gui, v *gocui.View) error {
+func (app *App) prevHistoryItem() error {
 	if app.state.historyIndex == -1 {
 		if len(app.state.History) == 0 {
 			return nil
@@ -184,11 +154,11 @@ func (app *App) prevHistoryItem(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-func (app *App) scrollMainDown(g *gocui.Gui, v *gocui.View) error {
+func (app *App) scrollMainDown() error {
 	return app.scrollDownView("main")
 }
 
-func (app *App) scrollMainUp(g *gocui.Gui, v *gocui.View) error {
+func (app *App) scrollMainUp() error {
 	return app.scrollUpView("main")
 }
 

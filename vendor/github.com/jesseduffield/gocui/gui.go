@@ -311,7 +311,20 @@ func (g *Gui) SetKeybinding(viewname string, contexts []string, key interface{},
 	if err != nil {
 		return err
 	}
-	kb = newKeybinding(viewname, contexts, k, ch, mod, handler)
+	kb = newKeybinding(viewname, contexts, k, ch, mod, handler, nil)
+	g.keybindings = append(g.keybindings, kb)
+	return nil
+}
+
+// SetBlindKeybinding is for when your handler is of the form func() error, meaning it doesnt't need access to the gui struct or the current view.
+func (g *Gui) SetBlindKeybinding(viewname string, contexts []string, key interface{}, mod Modifier, handler func() error) error {
+	var kb *keybinding
+
+	k, ch, err := getKey(key)
+	if err != nil {
+		return err
+	}
+	kb = newKeybinding(viewname, contexts, k, ch, mod, nil, handler)
 	g.keybindings = append(g.keybindings, kb)
 	return nil
 }
@@ -825,7 +838,7 @@ func (g *Gui) execKeybindings(v *View, ev *termbox.Event) (matched bool, err err
 	var matchingParentViewKb *keybinding
 
 	for _, kb := range g.keybindings {
-		if kb.handler == nil {
+		if kb.handler == nil && kb.blindHandler == nil {
 			continue
 		}
 		if !kb.matchKeypress(Key(ev.Key), ev.Ch, Modifier(ev.Mod)) {
@@ -852,9 +865,16 @@ func (g *Gui) execKeybindings(v *View, ev *termbox.Event) (matched bool, err err
 
 // execKeybinding executes a given keybinding
 func (g *Gui) execKeybinding(v *View, kb *keybinding) (bool, error) {
-	if err := kb.handler(g, v); err != nil {
-		return false, err
+	if kb.handler != nil {
+		if err := kb.handler(g, v); err != nil {
+			return false, err
+		}
+	} else if kb.blindHandler != nil {
+		if err := kb.blindHandler(); err != nil {
+			return false, err
+		}
 	}
+
 	return true, nil
 }
 
