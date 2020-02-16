@@ -36,10 +36,10 @@ func (app *App) setKeybindings() error {
 			modifier: gocui.ModNone,
 		},
 		{
-			key:      gocui.KeyEnter,
+			key:      gocui.KeyCtrlL,
 			handler:  app.flushBuffer,
 			viewName: "buffer",
-			modifier: gocui.ModNone,
+			modifier: gocui.ModMotion,
 		},
 		{
 			key:      gocui.KeyArrowUp,

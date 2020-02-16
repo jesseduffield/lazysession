@@ -45,7 +45,7 @@ func simpleEditor(v *View, key Key, ch rune, mod Modifier) {
 		v.MoveCursor(-1, 0, false)
 	case key == KeyArrowRight:
 		v.MoveCursor(1, 0, false)
-	case key == KeyTab:
+	case key == KeyEnter:
 		v.EditNewLine()
 	case key == KeySpace:
 		v.EditWrite(' ')
