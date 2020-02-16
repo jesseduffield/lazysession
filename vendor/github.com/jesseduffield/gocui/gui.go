@@ -762,9 +762,14 @@ func (g *Gui) draw(v *View) error {
 
 			wrappedCx := curview.cx % (vMaxX + 1)
 
-			vcx, vcy := curview.x0+wrappedCx+1-ox, curview.y0+curview.cy+wrapHeight+1-oy
-			if vcx >= 0 && vcx < vMaxX && vcy >= 0 && vcy < vMaxY {
-				termbox.SetCursor(vcx, vcy)
+			frameOffset := 0
+			if curview.Frame {
+				frameOffset = 1
+			}
+			vcx, vcy := wrappedCx+1-ox, curview.cy+wrapHeight+1-oy
+
+			if vcx >= 0 && vcx < vMaxX+frameOffset && vcy >= 0 && vcy <= vMaxY+frameOffset {
+				termbox.SetCursor(vcx+curview.x0, vcy+curview.y0)
 			} else {
 				termbox.HideCursor()
 			}
