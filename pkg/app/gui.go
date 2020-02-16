@@ -29,7 +29,10 @@ func (app *App) switchView() error {
 func (app *App) flushBuffer() error {
 	buffer := app.views.buffer.Buffer()
 	app.views.buffer.Clear()
-	app.state.History = append(app.state.History, buffer)
+	if len(app.state.History) == 0 || app.state.History[len(app.state.History)-1] != buffer {
+		app.state.History = append(app.state.History, buffer)
+	}
+
 	app.state.historyIndex = -1
 	app.views.main.StdinWriter.Write([]byte(buffer + "\r"))
 	return nil
