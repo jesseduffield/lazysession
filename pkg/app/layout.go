@@ -19,7 +19,18 @@ func (app *App) onResize() error {
 func (app *App) layout(g *gocui.Gui) error {
 	width, height := g.Size()
 
-	if v, err := g.SetView("main", -1, -1, width, height-4, 0); err != nil {
+	bufferHeight := 3
+	if app.views.buffer != nil {
+		linesHeight := app.views.buffer.LinesHeight()
+		if linesHeight == 0 {
+			linesHeight = 1
+		}
+		bufferHeight = linesHeight + 2
+	}
+
+	infoHeight := 1
+
+	if v, err := g.SetView("main", -1, -1, width, height-bufferHeight-infoHeight, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -38,7 +49,7 @@ func (app *App) layout(g *gocui.Gui) error {
 		app.g.SetCurrentView("main")
 	}
 
-	if v, err := g.SetView("buffer", 0, height-4, width-1, height-2, 0); err != nil {
+	if v, err := g.SetView("buffer", 0, height-bufferHeight-infoHeight, width-1, height-2, 0); err != nil {
 		if err.Error() != "unknown view" {
 			return err
 		}
@@ -63,9 +74,10 @@ func (app *App) layout(g *gocui.Gui) error {
 		go app.onFirstRender()
 	}
 
-	if width != app.prevWidth || height != app.prevHeight {
-		app.prevWidth = width
-		app.prevHeight = height
+	mainViewWidth, mainViewHeight := app.views.main.Size()
+	if mainViewWidth != app.prevWidth || mainViewHeight != app.prevHeight {
+		app.prevWidth = mainViewWidth
+		app.prevHeight = mainViewHeight
 		if err := app.onResize(); err != nil {
 			return err
 		}
