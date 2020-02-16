@@ -747,10 +747,9 @@ func (g *Gui) draw(v *View) error {
 
 	if g.Cursor {
 		if curview := g.currentView; curview != nil && curview == v {
-			gMaxX, gMaxY := g.Size()
-			vMaxX, _ := curview.Size()
+			vMaxX, vMaxY := curview.Size()
 			ox, oy := curview.Origin()
-			// for every time there was a wrap we need to move the cursor down one line
+			// for every time there was a wrap we need to move the view cursor down one line (the view cursor is the actual position in the view)
 			wrapHeight := 0
 			if len(wrapCounts) > 0 {
 				for _, wrapCount := range wrapCounts[0:curview.cy] {
@@ -763,9 +762,9 @@ func (g *Gui) draw(v *View) error {
 
 			wrappedCx := curview.cx % (vMaxX + 1)
 
-			cx, cy := curview.x0+wrappedCx+1-ox, curview.y0+curview.cy+wrapHeight+1-oy
-			if cx >= 0 && cx < gMaxX && cy >= 0 && cy < gMaxY {
-				termbox.SetCursor(cx, cy)
+			vcx, vcy := curview.x0+wrappedCx+1-ox, curview.y0+curview.cy+wrapHeight+1-oy
+			if vcx >= 0 && vcx < vMaxX && vcy >= 0 && vcy < vMaxY {
+				termbox.SetCursor(vcx, vcy)
 			} else {
 				termbox.HideCursor()
 			}

@@ -261,7 +261,7 @@ func (v *View) Origin() (x, y int) {
 }
 
 func (v *View) padCellsForNewCy() {
-	if v.cx > len(v.lines[v.cy]) {
+	if v.cx >= len(v.lines[v.cy]) {
 		v.lines[v.cy] = append(v.lines[v.cy], make([]cell, v.cx-len(v.lines[v.cy]))...)
 	}
 }
@@ -399,10 +399,6 @@ func (v *View) Write(p []byte) (n int, err error) {
 			v.log.Warn("carriage return")
 			if v.IgnoreCarriageReturns {
 				continue
-			}
-			width, _ := v.Size()
-			if v.cx == width+1 {
-				v.moveCursorDown(1)
 			}
 			v.cx = 0
 
@@ -607,6 +603,14 @@ func (v *View) Write(p []byte) (n int, err error) {
 				}
 
 				v.cx++
+
+				// TODO: put this behind a flag. We wouldn't want to use it for
+				// pure logs because we can't get the original line back when we resize
+				width, _ := v.Size()
+				if v.cx == width {
+					v.moveCursorDown(1)
+					v.cx = 0
+				}
 			}
 			sanityCheck()
 
