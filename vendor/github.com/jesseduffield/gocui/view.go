@@ -400,7 +400,12 @@ func (v *View) Write(p []byte) (n int, err error) {
 			if v.IgnoreCarriageReturns {
 				continue
 			}
+			width, _ := v.Size()
+			if v.cx == width+1 {
+				v.moveCursorDown(1)
+			}
 			v.cx = 0
+
 			sanityCheck()
 		default:
 
@@ -531,7 +536,6 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.oy = 0
 					v.ox = 0
 					v.Autoscroll = false
-					v.Wrap = false
 					sanityCheck()
 				case SWITCH_BACK_FROM_ALTERNATE_SCREEN:
 					v.log.Warn("switching back from alternate screen")
@@ -543,7 +547,6 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.ox = v.savedOx
 					v.oy = v.savedOy
 					v.Autoscroll = true
-					v.Wrap = true
 				case SET_SCROLL_MARGINS:
 					v.log.Warn("setting scroll margins")
 					v.topMargin = v.ei.instruction.param1
@@ -562,7 +565,6 @@ func (v *View) Write(p []byte) (n int, err error) {
 					}
 					sanityCheck()
 				case DELETE_LINES:
-					panic("test")
 					v.log.Warn("deleting lines, v.cy: ", v.cy, ", v.topMargin: ", v.topMargin, ", v.bottomMargin: ", v.bottomMargin, ", len(v.lines): ", len(v.lines))
 
 					if v.cy+1 < v.topMargin || v.cy+1 > v.bottomMargin {

@@ -13,7 +13,7 @@ func (app *App) onResize() error {
 		return nil
 	}
 	width, height := app.views.main.Size()
-	return pty.Setsize(app.ptmx, &pty.Winsize{Cols: uint16(width + 1), Rows: uint16(height)})
+	return pty.Setsize(app.ptmx, &pty.Winsize{Cols: uint16(width), Rows: uint16(height)})
 }
 
 func (app *App) layout(g *gocui.Gui) error {
@@ -35,11 +35,6 @@ func (app *App) layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Frame = false
-		// wrap off works for rails c, not for irb
-		// if we turn on wrap then to get rails c to work we need to act like we have
-		// a really wide window.
-		// for vim you need to be honest about the width, and set wrap to false
-		// for rails c to work with wrap false, you need a carriage return to create a new line
 		v.Wrap = true
 		// autoscroll is best turned off when you're in a full-window application like vim or lazygit. It would be good to make this adjustable while in the app.
 		// TODO: take escape codes like [?1049 to say we're turning off wrap and autoscroll.
