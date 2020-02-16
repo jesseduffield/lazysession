@@ -89,8 +89,11 @@ func (ei *escapeInterpreter) runes() []rune {
 		return []rune{0x1b, '[', ei.curch}
 	case stateParams:
 		ret := []rune{0x1b, '['}
-		for _, s := range ei.csiParam {
+		for i, s := range ei.csiParam {
 			ret = append(ret, []rune(s)...)
+			if i < len(ei.csiParam)-1 {
+				ret = append(ret, ';')
+			}
 		}
 		return append(ret, ei.curch)
 	}
@@ -208,7 +211,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 		return true, nil
 	case stateCSI:
 		switch {
-		case ch >= '0' && ch <= '9', ch == '?', ch == '>':
+		case ch >= '0' && ch <= '9', ch == '?', ch == '>', ch == ';':
 			ei.csiParam = append(ei.csiParam, "")
 		case ch == 'A', ch == 'B', ch == 'C', ch == 'D':
 			ei.csiParam = append(ei.csiParam, "1")
