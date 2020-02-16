@@ -169,7 +169,7 @@ func newView(name string, x0, y0, x1, y1 int, mode OutputMode, log *logrus.Entry
 		tainted:      true,
 		ei:           newEscapeInterpreter(mode),
 		log:          log,
-		topMargin:    0,
+		topMargin:    1,
 		bottomMargin: y1 - y0, // TODO: this might be off by one
 	}
 	return v
@@ -534,11 +534,12 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.Wrap = false
 					sanityCheck()
 				case SWITCH_BACK_FROM_ALTERNATE_SCREEN:
-					panic("switching back")
 					v.log.Warn("switching back from alternate screen")
 					v.lines = v.savedLines
-					v.cy = v.savedCx
-					v.cx = v.savedCy
+					v.topMargin = 1
+					v.bottomMargin = v.y1 - v.y0
+					v.cx = v.savedCx
+					v.cy = v.savedCy
 					v.ox = v.savedOx
 					v.oy = v.savedOy
 					v.Autoscroll = true
@@ -583,8 +584,6 @@ func (v *View) Write(p []byte) (n int, err error) {
 			}
 
 			for _, c := range cells {
-				// v.log.Warn("y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]), ", cell ch: ", c.chr)
-
 				if c.chr == 7 {
 					// bell: can't do anything
 					continue
@@ -601,6 +600,7 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.lines[v.cy][v.cx] = c
 				} else {
 					// TODO: decide whether this matters
+					v.log.Warn("y: ", v.cy, ", x: ", v.cx, ", line length: ", len(v.lines[v.cy]), ", cell ch: ", c.chr)
 					panic(v.name + ": above length for some reason")
 				}
 

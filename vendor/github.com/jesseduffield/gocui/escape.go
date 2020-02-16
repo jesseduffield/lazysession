@@ -401,7 +401,7 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			// case "?2004":
 			// 	// it's trying to set bracketed paste mode. Not sure what to do here
 			case "?1049":
-				ei.instruction.kind = SWITCH_TO_ALTERNATE_SCREEN
+				ei.instruction.kind = SWITCH_BACK_FROM_ALTERNATE_SCREEN
 				// switch to alternate screen. unimplemented
 			// case "?1":
 			// 	// setting cursor key to application. unimplemented
