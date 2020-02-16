@@ -42,6 +42,9 @@ const (
 	WRITE
 	SWITCH_TO_ALTERNATE_SCREEN
 	SWITCH_BACK_FROM_ALTERNATE_SCREEN
+	SET_SCROLL_MARGINS
+	INSERT_LINES
+	DELETE_LINES
 )
 
 type instruction struct {
@@ -227,6 +230,20 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.state = stateNone
 			ei.csiParam = nil
 			return true, nil
+		case ch == 'L':
+			ei.instruction.param1 = 1
+			ei.instruction.kind = INSERT_LINES
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+		case ch == 'M':
+			ei.instruction.param1 = 1
+			ei.instruction.kind = DELETE_LINES
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
 		default:
 			return false, errCSIParseError
 		}
@@ -297,6 +314,51 @@ func (ei *escapeInterpreter) parseOne(ch rune) (isEscape bool, err error) {
 			ei.state = stateNone
 			ei.csiParam = nil
 			return true, nil
+		case ch == 'r':
+			p, err := strconv.Atoi(ei.csiParam[0])
+			if err != nil {
+				return false, errCSIParseError
+			}
+			p2, err := strconv.Atoi(ei.csiParam[1])
+			if err != nil {
+				return false, errCSIParseError
+			}
+			ei.instruction.kind = SET_SCROLL_MARGINS
+			ei.instruction.param1 = p
+			ei.instruction.param2 = p2
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+		case ch == 'L':
+			ei.instruction.param1 = 1
+			if len(ei.csiParam) > 0 {
+				ei.instruction.param1, err = strconv.Atoi(ei.csiParam[0])
+				if err != nil {
+					return false, errCSIParseError
+				}
+			}
+
+			ei.instruction.kind = INSERT_LINES
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+		case ch == 'M':
+			ei.instruction.param1 = 1
+			if len(ei.csiParam) > 0 {
+				ei.instruction.param1, err = strconv.Atoi(ei.csiParam[0])
+				if err != nil {
+					return false, errCSIParseError
+				}
+			}
+
+			ei.instruction.kind = DELETE_LINES
+
+			ei.state = stateNone
+			ei.csiParam = nil
+			return true, nil
+
 		case ch == 'h':
 			// see https://vt100.net/docs/vt100-ug/chapter3.html
 			switch ei.csiParam[0] {

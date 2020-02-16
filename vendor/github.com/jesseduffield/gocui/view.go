@@ -129,6 +129,10 @@ type View struct {
 	savedLines [][]cell // TODO: see if we need a separate savedCx and savedCy for dealing with code 1049
 	savedOx    int
 	savedOy    int
+
+	// these are the top and bottom scroll margins
+	topMargin    int
+	bottomMargin int
 }
 
 type viewLine struct {
@@ -155,16 +159,18 @@ func (l lineType) String() string {
 // newView returns a new View object.
 func newView(name string, x0, y0, x1, y1 int, mode OutputMode, log *logrus.Entry) *View {
 	v := &View{
-		name:    name,
-		x0:      x0,
-		y0:      y0,
-		x1:      x1,
-		y1:      y1,
-		Frame:   true,
-		Editor:  DefaultEditor,
-		tainted: true,
-		ei:      newEscapeInterpreter(mode),
-		log:     log,
+		name:         name,
+		x0:           x0,
+		y0:           y0,
+		x1:           x1,
+		y1:           y1,
+		Frame:        true,
+		Editor:       DefaultEditor,
+		tainted:      true,
+		ei:           newEscapeInterpreter(mode),
+		log:          log,
+		topMargin:    0,
+		bottomMargin: y1 - y0, // TODO: this might be off by one
 	}
 	return v
 }
@@ -330,6 +336,26 @@ func quoteRunes(runes []rune) string {
 	return str
 }
 
+func insertLine(lines [][]cell, line []cell, index int) [][]cell {
+	// TODO: handle padding
+	lines = append(lines, nil)
+	copy(lines[index+1:], lines[index:])
+	lines[index] = line
+	return lines
+}
+
+func deleteLine(lines [][]cell, index int) [][]cell {
+	if len(lines) < index {
+		return lines
+	}
+	if index < len(lines)-1 {
+		copy(lines[index:], lines[index+1:])
+	}
+	lines[len(lines)-1] = nil
+	lines = lines[:len(lines)-1]
+	return lines
+}
+
 // Write appends a byte slice into the view's internal buffer. Because
 // View implements the io.Writer interface, it can be passed as parameter
 // of functions like fmt.Fprintf, fmt.Fprintln, io.Copy, etc. Clear must
@@ -360,11 +386,14 @@ func (v *View) Write(p []byte) (n int, err error) {
 		switch ch {
 		case '\n':
 			v.log.Warn("newline")
-			if v.cy == len(v.lines)-1 {
-				v.lines = append(v.lines, nil)
-			}
-			v.cy += 1
 			v.cx = 0
+			v.cy += 1
+			if v.cy == len(v.lines) {
+				v.lines = append(v.lines, []cell{})
+			} else if v.cy == v.bottomMargin {
+				v.lines = deleteLine(v.lines, v.topMargin-1)
+				v.lines = insertLine(v.lines, []cell{}, v.bottomMargin-1)
+			}
 			sanityCheck()
 		case '\r':
 			v.log.Warn("carriage return")
@@ -514,6 +543,35 @@ func (v *View) Write(p []byte) (n int, err error) {
 					v.oy = v.savedOy
 					v.Autoscroll = true
 					v.Wrap = true
+				case SET_SCROLL_MARGINS:
+					v.log.Warn("setting scroll margins")
+					v.topMargin = v.ei.instruction.param1
+					v.bottomMargin = v.ei.instruction.param2
+				case INSERT_LINES:
+					v.log.Warn("inserting lines, v.cy: ", v.cy, ", v.topMargin: ", v.topMargin, ", v.bottomMargin: ", v.bottomMargin, ", len(v.lines): ", len(v.lines))
+					if v.cy+1 < v.topMargin || v.cy+1 > v.bottomMargin {
+						continue
+					}
+					for i := 0; i < v.ei.instruction.param1; i++ {
+						if len(v.lines) >= v.bottomMargin {
+							v.lines = deleteLine(v.lines, v.bottomMargin-1)
+						}
+
+						v.lines = insertLine(v.lines, []cell{}, v.cy)
+					}
+					sanityCheck()
+				case DELETE_LINES:
+					panic("test")
+					v.log.Warn("deleting lines, v.cy: ", v.cy, ", v.topMargin: ", v.topMargin, ", v.bottomMargin: ", v.bottomMargin, ", len(v.lines): ", len(v.lines))
+
+					if v.cy+1 < v.topMargin || v.cy+1 > v.bottomMargin {
+						continue
+					}
+					for i := 0; i < v.ei.instruction.param1; i++ {
+						v.lines = insertLine(v.lines, []cell{}, v.bottomMargin-1)
+						v.lines = deleteLine(v.lines, v.cy)
+					}
+					sanityCheck()
 				default:
 					panic("instruction not understood")
 				}
